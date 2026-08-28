@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ShopBook</string>
+    <string name="title_activity_main">ShopBook</string>
+    <string name="package_name">in.shopbook.app</string>
+    <string name="custom_url_scheme">in.shopbook.app</string>
+</resources>

@@ -1,0 +1,199 @@
+/* ─── Google Fonts ─── */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+@import "tailwindcss";
+
+/* ─── Design System Tokens ─── */
+@theme {
+  /* Colours — Night mode (default) */
+  --color-base: #0A1A14;
+  --color-surface: #12291F;
+  --color-raised: #1A3A2C;
+  --color-line: #1F4534;
+  --color-line-strong: #2D6349;
+  --color-tx1: #F5F2E8;
+  --color-tx2: #9CB0A5;
+  --color-tx3: #66817A;
+  --color-tx-inverse: #0A1A14;
+  --color-marigold: #F5A623;
+  --color-marigold-press: #D68F17;
+  --color-success: #3FBF7F;
+  --color-danger: #E04B36;
+  --color-platform: #A970C9;
+  --color-zomato: #E23744;
+  --color-swiggy: #FC8019;
+
+  /* Spacing — 4pt grid, approved steps only */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* Font families */
+  --font-display: 'Anton', Impact, 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* ─── Base resets ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-tx1);
+  background: var(--color-base);
+  line-height: 1.5;
+  min-height: 100dvh;
+}
+
+/* ─── Typography utilities ─── */
+.text-display-xl {
+  font-family: var(--font-mono);
+  font-size: 42px;
+  line-height: 42px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-display-l {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 32px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.text-display-m {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 22px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.text-display-s {
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 14px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.text-body-l {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+
+.text-body-m {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.text-body-s {
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.text-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.text-mono-l {
+  font-family: var(--font-mono);
+  font-size: 21px;
+  line-height: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-mono-m {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Interactive states ─── */
+.tap {
+  transition: transform 0.08s ease-out, background 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.tap:active {
+  transform: scale(0.97);
+}
+
+.tap:focus-visible {
+  outline: 2px solid var(--color-marigold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap {
+    transition: none;
+  }
+  .tap:active {
+    transform: none;
+  }
+}
+
+/* ─── Scrollbar hide ─── */
+.noscroll::-webkit-scrollbar {
+  display: none;
+}
+.noscroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Tabular nums globally for mono ─── */
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Input resets ─── */
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--color-line-strong);
+  outline-offset: 0;
+}
