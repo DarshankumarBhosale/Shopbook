@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopBook — Design Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS — copy this block straight into Figma variables / CSS
+   ============================================================ */
+:root{
+  /* surface ladder */
+  --bg-base:#0A1A14; --bg-surface:#12291F; --bg-raised:#1A3A2C;
+  --line-subtle:#1F4534; --line-strong:#2D6349;
+  /* text ladder */
+  --tx-1:#F5F2E8; --tx-2:#9CB0A5; --tx-3:#66817A; --tx-inv:#0A1A14;
+  /* brand — actions and money ONLY */
+  --marigold:#F5A623; --marigold-press:#D68F17; --marigold-tint:#2A2410;
+  /* semantic */
+  --success:#3FBF7F; --danger:#E04B36; --platform:#A970C9;
+  --zomato:#E23744; --swiggy:#FC8019;
+  /* type */
+  --display:'Anton',Impact,'Arial Narrow',sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  /* radius */
+  --r-sm:6px; --r-md:10px; --r-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#191919;font-family:var(--body);color:#CFCFCF;padding:28px 16px 64px}
+
+/* canvas chrome */
+.hd{max-width:1240px;margin:0 auto 34px}
+.hd h1{font-family:var(--display);font-size:38px;letter-spacing:.02em;color:#fff;text-transform:uppercase;line-height:1}
+.hd p{font-size:14px;color:#8A8A8A;margin-top:8px;max-width:560px}
+.sec{max-width:1240px;margin:0 auto 40px}
+.sec>h2{font-family:var(--display);font-size:15px;letter-spacing:.14em;color:#6E6E6E;text-transform:uppercase;
+        padding-bottom:10px;border-bottom:1px solid #2C2C2C;margin-bottom:20px}
+
+/* ---------- foundations ---------- */
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.sw{width:118px}
+.sw i{display:block;height:52px;border-radius:8px;border:1px solid #2C2C2C}
+.sw b{display:block;font-size:11px;color:#CFCFCF;margin-top:6px;font-weight:600}
+.sw span{display:block;font-family:var(--mono);font-size:10px;color:#7A7A7A}
+
+.typerow{display:flex;align-items:baseline;gap:16px;padding:10px 0;border-bottom:1px solid #262626}
+.typerow em{font-style:normal;font-family:var(--mono);font-size:10px;color:#6E6E6E;width:104px;flex:none}
+.typerow u{text-decoration:none;font-family:var(--mono);font-size:10px;color:#5A5A5A;margin-left:auto;flex:none}
+
+/* ---------- phone frames ---------- */
+.board{display:flex;flex-wrap:wrap;gap:28px}
+.frame{width:300px;flex:none}
+.frame>h3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8A;margin-bottom:8px;font-weight:600}
+.frame>p{font-size:11px;color:#6E6E6E;margin-top:8px;line-height:1.5}
+.phone{width:300px;height:620px;background:var(--bg-base);border-radius:20px;overflow:hidden;
+       border:1px solid #2C2C2C;position:relative;display:flex;flex-direction:column}
+.scr{flex:1;overflow:hidden;position:relative}
+
+/* ============================================================
+   APP COMPONENTS
+   ============================================================ */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;
+        border-bottom:1px solid var(--line-subtle);flex:none}
+.eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-3);font-weight:600}
+.pill{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+      padding:3px 8px;border-radius:999px}
+.pill.live{color:var(--success);background:rgba(63,191,127,.12)}
+.pill.role{color:var(--tx-2);background:var(--bg-raised);border:1px solid var(--line-subtle)}
+
+.pad{padding:16px}
+.lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-3);font-weight:600;margin-bottom:6px}
+.hero{font-family:var(--mono);font-weight:700;font-size:42px;line-height:1;color:var(--marigold);
+      font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.sub{font-size:12px;color:var(--tx-2);margin-top:6px}
+.dot{color:var(--tx-3);margin:0 5px}
+
+.card{background:var(--bg-surface);border:1px solid var(--line-subtle);border-radius:var(--r-md);padding:14px}
+.card+.card{margin-top:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat b{display:block;font-family:var(--mono);font-size:19px;font-weight:700;color:var(--tx-1);
+        font-variant-numeric:tabular-nums;margin-top:3px}
+.stat.good b{color:var(--success)} .stat.bad b{color:var(--danger)} .stat.brand b{color:var(--marigold)}
+
+.segs{display:flex;gap:6px;padding:0 16px 12px}
+.seg{flex:1;text-align:center;padding:9px 6px;border-radius:var(--r-sm);font-size:12px;font-weight:600;
+     background:var(--bg-surface);color:var(--tx-2);border:1px solid var(--line-subtle)}
+.seg.on{background:var(--marigold);color:var(--tx-inv);border-color:var(--marigold)}
+
+/* the board grid */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 12px}
+.tile{background:var(--bg-surface);border:1px solid var(--line-subtle);border-radius:var(--r-md);
+      padding:9px 8px;min-height:74px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
+.tile n{font-family:var(--display);font-size:12.5px;line-height:1.08;text-transform:uppercase;
+        color:var(--tx-1);letter-spacing:.01em;display:block}
+.tile v{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--tx-2);font-variant-numeric:tabular-nums}
+.tile.on{background:var(--marigold);border-color:var(--marigold)}
+.tile.on n,.tile.on v{color:var(--tx-inv)}
+.tile.out{opacity:.38}
+.qty{position:absolute;top:-6px;right:-6px;width:21px;height:21px;border-radius:999px;background:var(--bg-base);
+     color:var(--marigold);border:2px solid var(--marigold);font-family:var(--mono);font-size:10px;font-weight:700;
+     display:flex;align-items:center;justify-content:center}
+
+/* sheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg-raised);
+       border-top:2px solid var(--marigold);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:12px 14px 14px}
+.line{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;color:var(--tx-1)}
+.line s{text-decoration:none;font-family:var(--mono);color:var(--tx-2);font-variant-numeric:tabular-nums}
+.tot{display:flex;justify-content:space-between;align-items:flex-end;margin:8px 0 10px;
+     padding-top:9px;border-top:1px solid var(--line-subtle)}
+.tot b{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--marigold);font-variant-numeric:tabular-nums}
+
+/* buttons */
+.btns{display:grid;gap:7px}
+.btns.c3{grid-template-columns:repeat(3,1fr)} .btns.c2{grid-template-columns:1fr 1fr}
+.btn{height:52px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;gap:7px;
+     font-family:var(--display);font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+.btn.pri{background:var(--marigold);color:var(--tx-inv)}
+.btn.sec{background:transparent;color:var(--tx-1);border:1px solid var(--marigold)}
+.btn.gho{background:var(--bg-surface);color:var(--tx-2);border:1px solid var(--line-subtle)}
+.btn.pl{background:var(--platform);color:#fff}
+.btn.dis{background:var(--bg-surface);color:var(--tx-3);border:1px solid var(--line-subtle)}
+.btn.full{width:100%}
+
+/* rows */
+.row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-subtle)}
+.row t{display:block;font-size:13px;color:var(--tx-1)}
+.row m{display:block;font-size:10.5px;color:var(--tx-3);margin-top:2px}
+.row q{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--tx-1);font-variant-numeric:tabular-nums}
+.row q.bad{color:var(--danger)}
+.ledger{display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px;color:var(--tx-2)}
+.ledger s{text-decoration:none;font-family:var(--mono);color:var(--tx-1);font-variant-numeric:tabular-nums}
+.ledger.big{border-top:1px solid var(--line-subtle);margin-top:7px;padding-top:10px;color:var(--tx-1)}
+.ledger.big s{font-size:21px;font-weight:700;color:var(--marigold)}
+
+/* alert */
+.alert{display:flex;gap:9px;background:rgba(224,75,54,.09);border:1px solid var(--danger);
+       border-radius:var(--r-md);padding:11px 12px}
+.alert h4{font-family:var(--display);font-size:14px;color:var(--danger);text-transform:uppercase;letter-spacing:.03em}
+.alert p{font-size:11px;color:var(--tx-2);margin-top:3px;line-height:1.45}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:600;
+      background:var(--bg-surface);color:var(--tx-2);border:1px solid var(--line-subtle)}
+.chip.on{background:var(--marigold);color:var(--tx-inv);border-color:var(--marigold)}
+.chip.zo.on{background:var(--zomato);border-color:var(--zomato);color:#fff}
+.chip.sw.on{background:var(--swiggy);border-color:var(--swiggy);color:#fff}
+
+/* field */
+.field{border-bottom:2px solid var(--line-strong);padding-bottom:7px}
+.field input{font-family:var(--mono);font-size:34px;font-weight:700;color:var(--marigold);background:none;
+             border:0;width:100%;outline:none;font-variant-numeric:tabular-nums}
+
+/* bars */
+.bar{height:7px;border-radius:999px;background:var(--bg-raised);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--marigold)}
+
+/* tabbar */
+.tabs{display:flex;background:var(--bg-surface);border-top:1px solid var(--line-subtle);flex:none}
+.tab{flex:1;padding:9px 0 11px;display:flex;flex-direction:column;align-items:center;gap:4px;
+     font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx-3);font-weight:600;
+     border-top:2px solid transparent;position:relative}
+.tab.on{color:var(--marigold);border-top-color:var(--marigold)}
+.tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab .bdg{position:absolute;top:6px;right:50%;margin-right:-20px;min-width:15px;height:15px;border-radius:999px;
+          background:var(--danger);color:#fff;font-family:var(--mono);font-size:9px;display:flex;
+          align-items:center;justify-content:center;padding:0 3px}
+
+/* misc */
+.ttl{font-family:var(--display);font-size:26px;text-transform:uppercase;letter-spacing:.02em;color:var(--tx-1);line-height:1.05}
+.body{font-size:12.5px;color:var(--tx-2);line-height:1.55;margin-top:8px}
+.note{font-size:11px;color:var(--tx-3);margin-top:10px;line-height:1.5}
+.spark{display:flex;align-items:flex-end;gap:5px;height:74px;margin-top:10px}
+.spark i{flex:1;background:var(--marigold);border-radius:3px 3px 0 0;opacity:.9}
+.spark i.dim{background:var(--line-strong)}
+.legend{display:flex;gap:12px;margin-top:9px;font-size:10.5px;color:var(--tx-3)}
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 8h12l-1.2 12H7.2L6 8z"/><path d="M9 8V6.2A3 3 0 0 1 15 6.2V8"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v8l-8 4-8-4V8z"/><path d="M4 8l8 4 8-4M12 12v8"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.4"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5 20.5 19.5h-17L12 4.5z"/><path d="M12 10v4.2M12 17.2h.01"/></symbol>
+</svg>
+
+<div class="hd">
+  <h1>ShopBook — Design Board</h1>
+  <p>Foundations and screen frames for the counter app. Every value here maps to a Figma variable; the CSS custom properties at the top of this file are the same tokens, ready to paste.</p>
+</div>
+
+<!-- ===================== FOUNDATIONS ===================== -->
+<div class="sec">
+  <h2>Colour</h2>
+  <div class="swatches">
+    <div class="sw"><i style="background:#0A1A14"></i><b>bg / base</b><span>#0A1A14</span></div>
+    <div class="sw"><i style="background:#12291F"></i><b>bg / surface</b><span>#12291F</span></div>
+    <div class="sw"><i style="background:#1A3A2C"></i><b>bg / raised</b><span>#1A3A2C</span></div>
+    <div class="sw"><i style="background:#2D6349"></i><b>line / strong</b><span>#2D6349</span></div>
+    <div class="sw"><i style="background:#F5A623"></i><b>marigold</b><span>#F5A623</span></div>
+    <div class="sw"><i style="background:#3FBF7F"></i><b>success</b><span>#3FBF7F</span></div>
+    <div class="sw"><i style="background:#E04B36"></i><b>danger</b><span>#E04B36</span></div>
+    <div class="sw"><i style="background:#A970C9"></i><b>platform</b><span>#A970C9</span></div>
+    <div class="sw"><i style="background:#F5F2E8"></i><b>text / 1</b><span>#F5F2E8</span></div>
+    <div class="sw"><i style="background:#9CB0A5"></i><b>text / 2</b><span>#9CB0A5</span></div>
+    <div class="sw"><i style="background:#66817A"></i><b>text / 3</b><span>#66817A</span></div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>Type scale</h2>
+  <div style="background:var(--bg-base);border:1px solid #2C2C2C;border-radius:12px;padding:6px 18px">
+    <div class="typerow"><em>display-xl</em><span style="font-family:var(--mono);font-size:42px;font-weight:700;color:var(--marigold)">₹2,340</span><u>Mono 42/700 · money hero</u></div>
+    <div class="typerow"><em>display-l</em><span style="font-family:var(--display);font-size:30px;color:var(--tx-1);text-transform:uppercase">Close the day</span><u>Anton 30 · +2%</u></div>
+    <div class="typerow"><em>display-m</em><span style="font-family:var(--display);font-size:19px;color:var(--tx-1);text-transform:uppercase;letter-spacing:.06em">Save expense</span><u>Anton 19 · +6% · buttons</u></div>
+    <div class="typerow"><em>display-s</em><span style="font-family:var(--display);font-size:13px;color:var(--tx-1);text-transform:uppercase">Sabudana Khichdi</span><u>Anton 13 · tile names</u></div>
+    <div class="typerow"><em>body-m</em><span style="font-size:14px;color:var(--tx-1)">Count the drawer before the first customer.</span><u>Inter 14/20</u></div>
+    <div class="typerow"><em>body-s</em><span style="font-size:12px;color:var(--tx-2)">47 orders · ₹1,890 cash · ₹450 UPI</span><u>Inter 12/16</u></div>
+    <div class="typerow"><em>label</em><span class="eyebrow">Opening cash</span><u>Inter 10/600 · +12% caps</u></div>
+    <div class="typerow"><em>mono-m</em><span style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--tx-1)">1,240 g</span><u>Mono 15/700 · tabular</u></div>
+  </div>
+  <p style="font-size:11.5px;color:#6E6E6E;margin-top:10px;line-height:1.6">
+    Anton is used four ways only: screen titles, tile names, button labels, panel headers. Every number in the app is mono with tabular figures so columns line up as digits change.
+  </p>
+</div>
+
+<!-- ===================== SCREENS ===================== -->
+<div class="sec">
+  <h2>Screens</h2>
+  <div class="board">
+
+    <!-- 1 START DAY -->
+    <div class="frame">
+      <h3>01 · Start day</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">Fri 28 Aug</span><span class="pill role">Owner</span></div>
+        <div class="scr pad" style="display:flex;flex-direction:column;justify-content:center;text-align:center">
+          <div class="ttl" style="font-size:32px">Start<br>the day</div>
+          <p class="body" style="margin:12px auto 30px;max-width:220px">Count the drawer before the first customer. Tonight's close checks against this number.</p>
+          <div class="lbl" style="text-align:center">Opening cash</div>
+          <div class="field" style="max-width:190px;margin:0 auto 30px"><input value="2,000" style="text-align:center" readonly></div>
+          <div class="btn pri full">Open day book</div>
+        </div>
+      </div>
+      <p>One decision per screen. The number is the only thing competing for attention.</p>
+    </div>
+
+    <!-- 2 SELL -->
+    <div class="frame">
+      <h3>02 · Sell — counter</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">Fri 28 Aug</span><span class="pill live">Day open</span></div>
+        <div class="scr">
+          <div class="pad" style="padding-bottom:12px">
+            <div class="lbl">Sales today</div>
+            <div class="hero">₹2,340</div>
+            <div class="sub">47 orders<i class="dot">·</i>₹1,890 cash<i class="dot">·</i>₹450 UPI</div>
+          </div>
+          <div class="segs"><div class="seg on">Counter</div><div class="seg">Zomato / Swiggy</div></div>
+          <div class="tiles">
+            <div class="tile on"><n>Vada Pav</n><v>₹20</v><div class="qty">2</div></div>
+            <div class="tile"><n>Misal Pav</n><v>₹70</v></div>
+            <div class="tile"><n>Batata Vada</n><v>₹15</v></div>
+            <div class="tile"><n>Samosa</n><v>₹20</v></div>
+            <div class="tile"><n>Kanda Bhaji</n><v>₹50</v></div>
+            <div class="tile"><n>Poha</n><v>₹30</v></div>
+            <div class="tile on"><n>Chai</n><v>₹15</v><div class="qty">1</div></div>
+            <div class="tile"><n>Upma</n><v>₹30</v></div>
+            <div class="tile out"><n>Sada Dosa</n><v>₹70</v></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab on"><svg><use href="#i-bag"/></svg>Sell</div>
+          <div class="tab"><svg><use href="#i-box"/></svg>Stock<span class="bdg">3</span></div>
+          <div class="tab"><svg><use href="#i-cash"/></svg>Money</div>
+          <div class="tab"><svg><use href="#i-chart"/></svg>Reports</div>
+          <div class="tab"><svg><use href="#i-more"/></svg>More</div>
+        </div>
+      </div>
+      <p>Selected tiles invert to marigold — the state reads from arm's length. Dosa is dimmed because an ingredient ran out.</p>
+    </div>
+
+    <!-- 3 CART -->
+    <div class="frame">
+      <h3>03 · Cart open</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">Fri 28 Aug</span><span class="pill live">Day open</span></div>
+        <div class="scr">
+          <div class="tiles" style="padding-top:14px">
+            <div class="tile on"><n>Vada Pav</n><v>₹20</v><div class="qty">2</div></div>
+            <div class="tile"><n>Misal Pav</n><v>₹70</v></div>
+            <div class="tile"><n>Samosa</n><v>₹20</v></div>
+            <div class="tile on"><n>Chai</n><v>₹15</v><div class="qty">1</div></div>
+            <div class="tile"><n>Poha</n><v>₹30</v></div>
+            <div class="tile"><n>Upma</n><v>₹30</v></div>
+          </div>
+          <div class="sheet">
+            <div class="line"><span>2 × Vada Pav</span><s>₹40</s></div>
+            <div class="line"><span>1 × Chai</span><s>₹15</s></div>
+            <div class="tot"><span class="lbl" style="margin:0">3 items</span><b>₹55</b></div>
+            <div class="btns c3">
+              <div class="btn pri">Cash</div>
+              <div class="btn sec">UPI</div>
+              <div class="btn gho">Khata</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p>Payment lives in the sheet, never a separate screen. Item, item, cash — three taps, no navigation.</p>
+    </div>
+
+    <!-- 4 ONLINE -->
+    <div class="frame">
+      <h3>04 · Sell — aggregator</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">Fri 28 Aug</span><span class="pill live">Day open</span></div>
+        <div class="scr">
+          <div class="pad" style="padding-bottom:12px">
+            <div class="lbl">Online today</div>
+            <div class="hero" style="color:var(--platform)">₹1,120</div>
+            <div class="sub">14 orders<i class="dot">·</i>₹874 after commission</div>
+          </div>
+          <div class="segs"><div class="seg">Counter</div><div class="seg on">Zomato / Swiggy</div></div>
+          <div class="pad" style="padding-top:0">
+            <div class="chips" style="margin-bottom:12px">
+              <div class="chip zo on">Zomato · 22%</div>
+              <div class="chip sw">Swiggy · 24%</div>
+            </div>
+            <div class="card">
+              <div class="ledger"><span>Order value</span><s>₹340</s></div>
+              <div class="ledger"><span>Commission 22%</span><s style="color:var(--danger)">− ₹75</s></div>
+              <div class="ledger big"><span>You will receive</span><s>₹265</s></div>
+            </div>
+            <div class="btn pl full" style="margin-top:12px">Save Zomato order</div>
+            <p class="note">Prices switch to the online list automatically. Payout is marked pending until the bank credit is matched.</p>
+          </div>
+        </div>
+      </div>
+      <p>Platform brand colours are used only on the platform chips, so they never compete with marigold.</p>
+    </div>
+
+    <!-- 5 STOCK -->
+    <div class="frame">
+      <h3>05 · Stock</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">Fri 28 Aug</span><span class="pill live">Day open</span></div>
+        <div class="scr pad">
+          <div class="alert" style="margin-bottom:12px">
+            <svg style="width:17px;height:17px;stroke:var(--danger);fill:none;stroke-width:1.8;flex:none;margin-top:1px"><use href="#i-alert"/></svg>
+            <div><h4>Buy today — 3 items</h4><p>Pav · Chutney · Coffee powder</p></div>
+          </div>
+          <div class="btns c3" style="margin-bottom:16px">
+            <div class="btn pri" style="height:42px;font-size:12px">Stock in</div>
+            <div class="btn gho" style="height:42px;font-size:12px">Wastage</div>
+            <div class="btn gho" style="height:42px;font-size:12px">Count</div>
+          </div>
+          <div class="lbl">In the kitchen</div>
+          <div class="row"><div><t>Pav</t><m>₹196 at ₹4.00/pc</m></div><q class="bad">49 pc</q></div>
+          <div class="row"><div><t>Potato</t><m>₹372 at ₹0.03/g</m></div><q>12,400 g</q></div>
+          <div class="row"><div><t>Besan</t><m>₹387 at ₹0.09/g</m></div><q>4,300 g</q></div>
+          <div class="row"><div><t>Chutney</t><m>₹98 at ₹0.12/g</m></div><q class="bad">820 g</q></div>
+          <div class="row" style="border:0"><div><t>Oil</t><m>₹868 at ₹0.14/ml</m></div><q>6,200 ml</q></div>
+        </div>
+        <div class="tabs">
+          <div class="tab"><svg><use href="#i-bag"/></svg>Sell</div>
+          <div class="tab on"><svg><use href="#i-box"/></svg>Stock<span class="bdg">3</span></div>
+          <div class="tab"><svg><use href="#i-cash"/></svg>Money</div>
+          <div class="tab"><svg><use href="#i-chart"/></svg>Reports</div>
+          <div class="tab"><svg><use href="#i-more"/></svg>More</div>
+        </div>
+      </div>
+      <p>Red is reserved for genuinely actionable shortfalls, so a red number always means go buy something.</p>
+    </div>
+
+    <!-- 6 CLOSE -->
+    <div class="frame">
+      <h3>06 · Close the day</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">Fri 28 Aug</span><span class="pill live">Day open</span></div>
+        <div class="scr pad">
+          <div class="ttl" style="font-size:24px;margin-bottom:14px">Close<br>the day</div>
+          <div class="card">
+            <div class="ledger"><span>Opening cash</span><s>₹2,000</s></div>
+            <div class="ledger"><span>Cash sales</span><s>+ ₹1,890</s></div>
+            <div class="ledger"><span>Khata received</span><s>+ ₹300</s></div>
+            <div class="ledger"><span>Cash expenses</span><s>− ₹640</s></div>
+            <div class="ledger big"><span>Drawer should hold</span><s>₹3,550</s></div>
+          </div>
+          <div class="lbl" style="margin-top:16px">Now count it</div>
+          <div class="field" style="margin-bottom:12px"><input value="3,470" style="color:var(--tx-1)" readonly></div>
+          <div class="alert" style="margin-bottom:12px;display:block">
+            <h4>Short ₹80</h4>
+            <p style="margin-top:6px">A note is required before this day can be locked.</p>
+          </div>
+          <div class="btn dis full">Lock the day</div>
+        </div>
+      </div>
+      <p>The button stays disabled until the gap is explained. Friction placed exactly where it protects you.</p>
+    </div>
+
+    <!-- 7 REPORTS -->
+    <div class="frame">
+      <h3>07 · Reports</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">Fri 28 Aug</span><span class="pill role">Owner</span></div>
+        <div class="scr pad">
+          <div class="grid2" style="margin-bottom:8px">
+            <div class="card stat"><span class="eyebrow">Revenue</span><b>₹68,400</b></div>
+            <div class="card stat good"><span class="eyebrow">Net profit</span><b>₹14,180</b></div>
+            <div class="card stat brand"><span class="eyebrow">Margin</span><b>20.7%</b></div>
+            <div class="card stat bad"><span class="eyebrow">Wastage</span><b>₹1,920</b></div>
+          </div>
+          <div class="card">
+            <span class="eyebrow">Sales · last 7 days</span>
+            <div class="spark">
+              <i style="height:52%"></i><i style="height:68%"></i><i class="dim" style="height:14%"></i>
+              <i style="height:74%"></i><i style="height:61%"></i><i style="height:88%"></i><i style="height:96%"></i>
+            </div>
+            <div class="legend"><span>Mon closed</span><span style="margin-left:auto">Peak ₹3,120 Sun</span></div>
+          </div>
+          <div class="card">
+            <span class="eyebrow">Profit per item</span>
+            <div style="margin-top:9px">
+              <div class="ledger" style="padding:2px 0"><span>Vada Pav</span><s>78%</s></div><div class="bar"><i style="width:78%"></i></div>
+              <div class="ledger" style="padding:6px 0 2px"><span>Misal Pav</span><s>64%</s></div><div class="bar"><i style="width:64%"></i></div>
+              <div class="ledger" style="padding:6px 0 2px"><span>Cold Drink</span><s>30%</s></div><div class="bar"><i style="width:30%;background:var(--danger)"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab"><svg><use href="#i-bag"/></svg>Sell</div>
+          <div class="tab"><svg><use href="#i-box"/></svg>Stock<span class="bdg">3</span></div>
+          <div class="tab"><svg><use href="#i-cash"/></svg>Money</div>
+          <div class="tab on"><svg><use href="#i-chart"/></svg>Reports</div>
+          <div class="tab"><svg><use href="#i-more"/></svg>More</div>
+        </div>
+      </div>
+      <p>Margin per item beats revenue per item — it tells you what to push, not just what moved.</p>
+    </div>
+
+    <!-- 8 EMPTY / STATES -->
+    <div class="frame">
+      <h3>08 · States</h3>
+      <div class="phone">
+        <div class="topbar"><span class="eyebrow">States</span><span class="pill role">Spec</span></div>
+        <div class="scr pad">
+          <div class="lbl">Button — primary</div>
+          <div class="btn pri full" style="margin-bottom:6px">Default</div>
+          <div class="btn full" style="background:var(--marigold-press);color:var(--tx-inv);margin-bottom:6px">Pressed · scale .97</div>
+          <div class="btn dis full" style="margin-bottom:6px">Disabled</div>
+          <div class="btn pri full" style="outline:2px solid #fff;outline-offset:2px;margin-bottom:18px">Focus ring</div>
+
+          <div class="lbl">Tile</div>
+          <div class="tiles" style="padding:0;margin-bottom:18px">
+            <div class="tile"><n>Default</n><v>₹20</v></div>
+            <div class="tile on"><n>Selected</n><v>₹20</v><div class="qty">3</div></div>
+            <div class="tile out"><n>Out</n><v>₹20</v></div>
+          </div>
+
+          <div class="lbl">Empty</div>
+          <div class="card" style="text-align:center;padding:22px 14px">
+            <div style="font-family:var(--display);font-size:15px;color:var(--tx-2);text-transform:uppercase">No sales yet</div>
+            <p style="font-size:11.5px;color:var(--tx-3);margin-top:6px">Tap an item on the board to start.</p>
+          </div>
+        </div>
+      </div>
+      <p>Every interactive component ships with four states. Empty screens point at the next action.</p>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

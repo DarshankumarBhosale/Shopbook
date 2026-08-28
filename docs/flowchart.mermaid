@@ -1,0 +1,83 @@
+flowchart TD
+    START(["Open App"]) --> AUTH{"Who is logged in?"}
+    AUTH -->|"Helper"| DASH
+    AUTH -->|"Owner"| DASH
+
+    DASH{"Is today's day-book open?"}
+    DASH -->|"No"| OPEN["START DAY<br/>Enter opening cash<br/>Closing stock auto-carried from yesterday"]
+    DASH -->|"Yes"| HOME["HOME DASHBOARD<br/>Today's sales, cash in hand, low-stock alerts"]
+    OPEN --> HOME
+
+    HOME --> S["1. RECORD SALE"]
+    HOME --> P["2. PURCHASE or EXPENSE"]
+    HOME --> ST["3. STOCK IN / WASTAGE"]
+    HOME --> CR["4. UDHAAR / CREDIT"]
+    HOME --> R["5. REPORTS"]
+    HOME --> CLOSE["6. CLOSE DAY"]
+
+    %% ---------- SALES ----------
+    S --> S1{"Which channel?"}
+    S1 -->|"Walk-in counter"| S2["Tap items from menu grid<br/>Set quantity"]
+    S1 -->|"Zomato / Swiggy"| S3["Enter order ID, gross value,<br/>platform, commission percent"]
+
+    S2 --> S4{"Payment mode"}
+    S4 -->|"Cash"| S5["Cash drawer increases"]
+    S4 -->|"UPI or Card"| S6["Digital collection increases"]
+    S4 -->|"Udhaar"| S7["Post to customer ledger"]
+
+    S3 --> S8["Mark payout as PENDING<br/>Net = gross minus commission"]
+
+    S5 --> DEDUCT
+    S6 --> DEDUCT
+    S7 --> DEDUCT
+    S8 --> DEDUCT
+
+    DEDUCT["AUTO STOCK DEDUCTION<br/>Each menu item mapped to a recipe<br/>e.g. 1 vada pav = 1 pav + 1 vada + chutney"]
+    DEDUCT --> DB[("Save to local database")]
+
+    DB --> LOW{"Any item below<br/>reorder level?"}
+    LOW -->|"Yes"| ALERT["Show low-stock alert<br/>Add to purchase list"]
+    LOW -->|"No"| HOME
+    ALERT --> HOME
+
+    %% ---------- PURCHASE / EXPENSE ----------
+    P --> P1["Pick category:<br/>raw material, gas, rent, salary,<br/>electricity, packaging, misc"]
+    P1 --> P2{"Paid how?"}
+    P2 -->|"Cash"| P3["Cash drawer decreases"]
+    P2 -->|"UPI or Bank"| P4["Bank balance decreases"]
+    P2 -->|"Credit from supplier"| P5["Post to supplier ledger"]
+    P3 --> DB
+    P4 --> DB
+    P5 --> DB
+
+    %% ---------- STOCK ----------
+    ST --> ST1{"Stock action"}
+    ST1 -->|"Stock In"| ST2["Item, qty, rate, supplier<br/>Updates average cost"]
+    ST1 -->|"Wastage"| ST3["Item, qty, reason:<br/>spoiled, spilled, unsold, staff meal"]
+    ST1 -->|"Physical audit"| ST4["Enter counted qty<br/>System logs the difference"]
+    ST2 --> DB
+    ST3 --> DB
+    ST4 --> DB
+
+    %% ---------- CREDIT ----------
+    CR --> CR1["Customer khata:<br/>outstanding, ageing, payment received"]
+    CR1 --> DB
+
+    %% ---------- CLOSE DAY ----------
+    CLOSE --> C1["Expected cash =<br/>opening + cash sales<br/>minus cash expenses"]
+    C1 --> C2["Enter physically counted cash"]
+    C2 --> C3{"Does it match?"}
+    C3 -->|"No"| C4["Log shortage or excess<br/>with a mandatory note"]
+    C3 -->|"Yes"| C5
+    C4 --> C5["DAY SUMMARY<br/>Sales, COGS, gross profit,<br/>closing stock value, wastage"]
+    C5 --> C6[("Lock the day<br/>Sync backup to cloud")]
+    C6 --> END(["Done"])
+
+    %% ---------- REPORTS ----------
+    R --> R1["Sales: day / week / month"]
+    R --> R2["Best sellers and slow movers"]
+    R --> R3["Channel mix: counter vs aggregator"]
+    R --> R4["Stock valuation and purchase history"]
+    R --> R5["Wastage percent of production"]
+    R --> R6["Profit and loss with margin percent"]
+    R --> R7["Aggregator payout reconciliation:<br/>expected vs actually credited"]
