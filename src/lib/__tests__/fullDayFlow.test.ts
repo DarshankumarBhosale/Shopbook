@@ -24,9 +24,9 @@ describe('Phase 1 Full Day Operational Flow', () => {
     const itemsCount = await db.items.count();
     const recipesCount = await db.recipes.count();
 
-    expect(rawMaterialsCount).toBe(23);
-    expect(itemsCount).toBe(14);
-    expect(recipesCount).toBeGreaterThan(30);
+    expect(rawMaterialsCount).toBe(32);
+    expect(itemsCount).toBe(27);
+    expect(recipesCount).toBeGreaterThan(100);
 
     // Initial stock for Pav (rmId: 1, reorder: 100 * 1.6 = 160)
     const initialMoves = await db.stockMoves.where('rmId').equals(1).toArray();
@@ -39,10 +39,10 @@ describe('Phase 1 Full Day Operational Flow', () => {
     expect(openDay.status).toBe('open');
 
     // 3. Step 2: Sell two Vada Pav on Cash
-    // Vada Pav id is 1, counter price is ₹20 (2000 paise)
-    useSaleStore.getState().addToCart(1);
-    useSaleStore.getState().addToCart(1);
-    expect(useSaleStore.getState().cart[1]).toBe(2);
+    // Vada Pav id is 11, counter price is ₹15 (1500 paise)
+    useSaleStore.getState().addToCart(11);
+    useSaleStore.getState().addToCart(11);
+    expect(useSaleStore.getState().cart[11]).toBe(2);
 
     const grossPaise = await useSaleStore.getState().commitSale({
       dayId: openDay.id!,
@@ -50,13 +50,13 @@ describe('Phase 1 Full Day Operational Flow', () => {
       createdBy: 'owner',
     });
 
-    expect(grossPaise).toBe(4000); // 4000 paise = ₹40
+    expect(grossPaise).toBe(3000); // 3000 paise = ₹30
     expect(useSaleStore.getState().cart).toEqual({});
 
     // Verify Sale record
     const sales = await db.sales.where('dayId').equals(openDay.id!).toArray();
     expect(sales).toHaveLength(1);
-    expect(sales[0].grossAmount).toBe(4000);
+    expect(sales[0].grossAmount).toBe(3000);
     expect(sales[0].paymentMode).toBe('Cash');
 
     // Verify Stock deduction for Pav: 160 - 2 = 158
@@ -78,11 +78,11 @@ describe('Phase 1 Full Day Operational Flow', () => {
     expect(expenses[0].paymentMode).toBe('Cash');
 
     // 5. Step 4: Close and Reconcile Cash
-    // Expected: Opening (200,000) + Cash Sales (4,000) - Cash Expenses (40,000) = 164,000 paise (₹1,640)
-    const expectedPaise = computeExpectedCash(openDay.openingCash, 4000, 40000, 0);
-    expect(expectedPaise).toBe(164000);
+    // Expected: Opening (200,000) + Cash Sales (3,000) - Cash Expenses (40,000) = 163,000 paise (₹1,630)
+    const expectedPaise = computeExpectedCash(openDay.openingCash, 3000, 40000, 0);
+    expect(expectedPaise).toBe(163000);
 
-    const countedRupees = 1640;
+    const countedRupees = 1630;
     const countedPaise = countedRupees * 100;
     const variance = computeVariance(expectedPaise, countedPaise);
     expect(variance).toBe(0);
@@ -92,7 +92,7 @@ describe('Phase 1 Full Day Operational Flow', () => {
       expectedPaise,
       '',
       {
-        grossSalesPaise: 4000,
+        grossSalesPaise: 3000,
         cogsPaise: sales[0].cogs,
         expensesPaise: 40000,
       }
@@ -102,8 +102,8 @@ describe('Phase 1 Full Day Operational Flow', () => {
     const closedDay = await db.dayBook.get(openDay.id!);
     expect(closedDay).toBeDefined();
     expect(closedDay!.status).toBe('closed');
-    expect(closedDay!.closingCashExpected).toBe(164000);
-    expect(closedDay!.closingCashCounted).toBe(164000);
+    expect(closedDay!.closingCashExpected).toBe(163000);
+    expect(closedDay!.closingCashCounted).toBe(163000);
     expect(closedDay!.variance).toBe(0);
     expect(closedDay!.closedAt).toBeDefined();
     expect(useDayStore.getState().openDay).toBeNull();

@@ -42,6 +42,28 @@ export class ShopBookDB extends Dexie {
       payouts:      '++id, platform',
       auditLog:     '++id, dayId, userId, action, createdAt',
     });
+
+    // v2 replaces the demo menu that shipped with v1 with the real
+    // Aaisaheb Snacks Center menu. Item and raw-material IDs are different
+    // between the two, so every row that references them (recipes, stock
+    // moves, sale lines) would point at the wrong record if kept. The v1
+    // data was demo data only, so the upgrade clears it and lets the seeder
+    // repopulate from scratch on next open.
+    this.version(2).stores({}).upgrade(async (tx) => {
+      await Promise.all([
+        tx.table('shops').clear(),
+        tx.table('dayBook').clear(),
+        tx.table('items').clear(),
+        tx.table('rawMaterials').clear(),
+        tx.table('recipes').clear(),
+        tx.table('sales').clear(),
+        tx.table('saleLines').clear(),
+        tx.table('stockMoves').clear(),
+        tx.table('purchases').clear(),
+        tx.table('expenses').clear(),
+        tx.table('customers').clear(),
+      ]);
+    });
   }
 }
 

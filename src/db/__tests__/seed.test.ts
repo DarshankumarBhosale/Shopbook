@@ -19,7 +19,7 @@ describe('seedDatabaseIfEmpty', () => {
     ]);
 
     expect([firstSeeded, secondSeeded].filter(Boolean)).toHaveLength(1);
-    expect(await db.items.count()).toBe(14);
+    expect(await db.items.count()).toBe(27);
     expect(await db.shops.count()).toBe(1);
   });
 
@@ -28,6 +28,6 @@ describe('seedDatabaseIfEmpty', () => {
     const seededAgain = await seedDatabaseIfEmpty();
 
     expect(seededAgain).toBe(false);
-    expect(await db.items.count()).toBe(14);
+    expect(await db.items.count()).toBe(27);
   });
 });

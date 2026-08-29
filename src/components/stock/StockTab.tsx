@@ -126,7 +126,7 @@ export const StockTab: React.FC = () => {
 
       {/* Sheet form */}
       {sheet && (
-        <div className="bg-surface border border-marigold rounded-md p-4 mb-4">
+        <div className="bg-surface border border-line-strong rounded-md p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
             <span className="font-display text-[18px] tracking-[0.04em] uppercase text-tx1">
               {sheetTitle}
