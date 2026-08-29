@@ -1,52 +1,55 @@
 import React, { useState } from 'react';
 import { useUIStore } from '../../store/uiStore';
 import { ExpenseEntry } from './ExpenseEntry';
+import { KhataView } from './KhataView';
 import { CloseDay } from './CloseDay';
+
+type SubView = 'expense' | 'khata' | 'close';
 
 export const MoneyTab: React.FC = () => {
   const role = useUIStore((state) => state.role);
-  const [subView, setSubView] = useState<'expense' | 'close'>('expense');
+  const [subView, setSubView] = useState<SubView>('expense');
+
+  // A helper records spending and collects khata, but does not close the day.
+  const tabs: { id: SubView; label: string }[] =
+    role === 'owner'
+      ? [
+          { id: 'expense', label: 'Expense' },
+          { id: 'khata', label: 'Khata' },
+          { id: 'close', label: 'Close day' },
+        ]
+      : [
+          { id: 'expense', label: 'Expense' },
+          { id: 'khata', label: 'Khata' },
+        ];
+
+  const active: SubView = subView === 'close' && role !== 'owner' ? 'expense' : subView;
 
   return (
-    <div className="flex-1 flex flex-col px-4 pt-3 pb-[100px]">
-      {/* Sub-view navigation for Owner */}
-      {role === 'owner' && (
-        <div className="flex gap-2 mb-4">
+    <div className="flex-1 flex flex-col px-4 pt-3 pb-[100px] overflow-y-auto noscroll">
+      <div className="flex gap-2 mb-4">
+        {tabs.map((t) => (
           <button
+            key={t.id}
             type="button"
-            onClick={() => setSubView('expense')}
-            className="tap flex-1 py-2.5 rounded-md text-[13px] font-bold border transition-colors"
+            onClick={() => setSubView(t.id)}
+            className="tap flex-1 min-h-[44px] rounded-md text-[13px] font-bold border transition-colors"
             style={{
               backgroundColor:
-                subView === 'expense' ? 'var(--color-marigold)' : 'var(--color-surface)',
+                active === t.id ? 'var(--color-marigold)' : 'var(--color-surface)',
               borderColor:
-                subView === 'expense' ? 'var(--color-marigold)' : 'var(--color-line)',
-              color:
-                subView === 'expense' ? 'var(--color-tx-inverse)' : 'var(--color-tx2)',
+                active === t.id ? 'var(--color-marigold)' : 'var(--color-line)',
+              color: active === t.id ? 'var(--color-tx-inverse)' : 'var(--color-tx2)',
             }}
           >
-            Expense
+            {t.label}
           </button>
-          <button
-            type="button"
-            onClick={() => setSubView('close')}
-            className="tap flex-1 py-2.5 rounded-md text-[13px] font-bold border transition-colors"
-            style={{
-              backgroundColor:
-                subView === 'close' ? 'var(--color-marigold)' : 'var(--color-surface)',
-              borderColor:
-                subView === 'close' ? 'var(--color-marigold)' : 'var(--color-line)',
-              color:
-                subView === 'close' ? 'var(--color-tx-inverse)' : 'var(--color-tx2)',
-            }}
-          >
-            Close day
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* View Content */}
-      {subView === 'expense' || role !== 'owner' ? <ExpenseEntry /> : <CloseDay />}
+      {active === 'expense' && <ExpenseEntry />}
+      {active === 'khata' && <KhataView />}
+      {active === 'close' && role === 'owner' && <CloseDay />}
     </div>
   );
 };

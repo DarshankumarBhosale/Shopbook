@@ -57,6 +57,22 @@ export const ExpenseEntry: React.FC = () => {
 
   return (
     <div className="flex flex-col">
+      {/* The one repeating cost: two ₹1,000 cylinders a month. */}
+      <div className="mb-4">
+        <Label>Quick add</Label>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedCat('Gas cylinder');
+            setAmount('1000');
+            setPaymentMode('Cash');
+          }}
+          className="tap mt-1 min-h-[44px] w-full rounded-md border border-line-strong bg-surface px-4 text-body-m font-semibold text-tx1"
+        >
+          Gas cylinder · ₹1,000
+        </button>
+      </div>
+
       {/* Category selector chips */}
       <div className="mb-4">
         <Label>Category</Label>

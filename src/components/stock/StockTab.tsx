@@ -31,6 +31,19 @@ export const StockTab: React.FC = () => {
     [rawMaterials]
   );
 
+  // Grouped by where the material is actually bought, so the list reads like
+  // a shopping round rather than one long alphabet.
+  const byCategory = React.useMemo(() => {
+    const groups = new Map<string, typeof sortedMaterials>();
+    for (const rm of sortedMaterials) {
+      const key = rm.category || 'Other';
+      const bucket = groups.get(key);
+      if (bucket) bucket.push(rm);
+      else groups.set(key, [rm]);
+    }
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [sortedMaterials]);
+
   const [sheet, setSheet] = useState<Sheet>(null);
   const [rmId, setRmId] = useState<string>('');
   const [qty, setQty] = useState('');
@@ -210,30 +223,46 @@ export const StockTab: React.FC = () => {
         </div>
       )}
 
-      {/* Full raw material list */}
+      {/* Full raw material list, grouped by where it is bought */}
       <Label>Everything in the kitchen</Label>
-      <div className="mt-1 divide-y divide-line">
-        {sortedMaterials.map((rm) => {
-          const have = stockMap[rm.id!] ?? 0;
-          const low = have < rm.reorderLevel;
-          return (
-            <div key={rm.id} className="flex items-center justify-between py-2.5">
-              <div>
-                <div className="text-body-m text-tx1">{rm.name}</div>
-                <div className="text-body-s text-tx3">
-                  {formatRupees(rm.avgCost * have)} at {formatUnitRate(rm.avgCost, rm.unit)}
-                </div>
-              </div>
-              <div
-                className="font-mono text-mono-m font-bold"
-                style={{ color: low ? 'var(--color-danger)' : 'var(--color-tx1)' }}
-              >
-                {Math.round(have)}
-                <span className="text-body-s text-tx3"> {rm.unit}</span>
-              </div>
+      <div className="mt-1 flex flex-col gap-4">
+        {byCategory.map(([category, materials]) => (
+          <div key={category}>
+            <div className="flex items-baseline justify-between border-b border-line pb-1 mb-1">
+              <span className="font-display text-[14px] tracking-[0.06em] uppercase text-tx2">
+                {category}
+              </span>
+              <span className="font-mono text-body-s text-tx3">
+                {materials.length}
+              </span>
             </div>
-          );
-        })}
+
+            <div className="divide-y divide-line">
+              {materials.map((rm) => {
+                const have = stockMap[rm.id!] ?? 0;
+                const low = have < rm.reorderLevel;
+                return (
+                  <div key={rm.id} className="flex items-center justify-between py-2.5">
+                    <div>
+                      <div className="text-body-m text-tx1">{rm.name}</div>
+                      <div className="text-body-s text-tx3">
+                        {formatRupees(rm.avgCost * have)} at{' '}
+                        {formatUnitRate(rm.avgCost, rm.unit)}
+                      </div>
+                    </div>
+                    <div
+                      className="font-mono text-mono-m font-bold"
+                      style={{ color: low ? 'var(--color-danger)' : 'var(--color-tx1)' }}
+                    >
+                      {Math.round(have)}
+                      <span className="text-body-s text-tx3"> {rm.unit}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

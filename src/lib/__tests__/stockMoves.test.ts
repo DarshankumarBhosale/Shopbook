@@ -71,9 +71,9 @@ describe('stockMoves pure functions', () => {
 
   it('computes stock map for all raw materials', () => {
     const rawMaterials: RawMaterial[] = [
-      { id: 1, name: 'Pav', unit: 'pc', avgCost: 400, reorderLevel: 100 },
-      { id: 2, name: 'Potato', unit: 'g', avgCost: 3, reorderLevel: 8000 },
-      { id: 3, name: 'Besan', unit: 'g', avgCost: 9, reorderLevel: 3000 },
+      { id: 1, name: 'Pav', unit: 'pc', category: 'Test', avgCost: 400, reorderLevel: 100 },
+      { id: 2, name: 'Potato', unit: 'g', category: 'Test', avgCost: 3, reorderLevel: 8000 },
+      { id: 3, name: 'Besan', unit: 'g', category: 'Test', avgCost: 9, reorderLevel: 3000 },
     ];
 
     const moves: StockMove[] = [
@@ -90,9 +90,9 @@ describe('stockMoves pure functions', () => {
 
   it('flags raw materials below their reorder level as low stock', () => {
     const rawMaterials: RawMaterial[] = [
-      { id: 1, name: 'Pav', unit: 'pc', avgCost: 400, reorderLevel: 100 },
-      { id: 2, name: 'Potato', unit: 'g', avgCost: 3, reorderLevel: 8000 },
-      { id: 3, name: 'Besan', unit: 'g', avgCost: 9, reorderLevel: 3000 },
+      { id: 1, name: 'Pav', unit: 'pc', category: 'Test', avgCost: 400, reorderLevel: 100 },
+      { id: 2, name: 'Potato', unit: 'g', category: 'Test', avgCost: 3, reorderLevel: 8000 },
+      { id: 3, name: 'Besan', unit: 'g', category: 'Test', avgCost: 9, reorderLevel: 3000 },
     ];
     const stockMap = { 1: 50, 2: 9000, 3: 3000 };
 
@@ -103,8 +103,8 @@ describe('stockMoves pure functions', () => {
 
   it('computes total wastage value priced at current average cost', () => {
     const rawMaterials: RawMaterial[] = [
-      { id: 1, name: 'Pav', unit: 'pc', avgCost: 400, reorderLevel: 100 },
-      { id: 2, name: 'Potato', unit: 'g', avgCost: 3, reorderLevel: 8000 },
+      { id: 1, name: 'Pav', unit: 'pc', category: 'Test', avgCost: 400, reorderLevel: 100 },
+      { id: 2, name: 'Potato', unit: 'g', category: 'Test', avgCost: 3, reorderLevel: 8000 },
     ];
     const moves: StockMove[] = [
       { dayId: 101, rmId: 1, type: 'wastage', qty: -5, reason: 'Spoiled', createdAt: '2026-08-28T11:00:00Z' },

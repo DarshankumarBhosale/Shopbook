@@ -49,6 +49,8 @@ export interface RawMaterial {
   id?: number;
   name: string;
   unit: string;
+  /** Groups the shopping list by where it is bought (bakery, dairy, ...). */
+  category: string;
   /** Weighted average cost per unit, in paise. */
   avgCost: number;
   /** Do NOT add currentQty here — stock is computed from stockMoves. */
@@ -62,7 +64,8 @@ export interface Recipe {
   qtyPerUnit: number; // how much RM per 1 unit of item
 }
 
-export type PaymentMode = 'Cash' | 'UPI' | 'Card' | 'Udhaar' | 'Platform';
+/** The shop takes cash and UPI, and lets regulars run a khata. No card machine. */
+export type PaymentMode = 'Cash' | 'UPI' | 'Udhaar' | 'Platform';
 export type SaleChannel = 'counter' | 'zomato' | 'swiggy';
 
 export interface Sale {
@@ -124,7 +127,22 @@ export interface Customer {
   id?: number;
   name: string;
   phone: string;
-  outstanding: number; // paise
+  /**
+   * Do NOT add an `outstanding` column here. What a customer owes is the sum
+   * of their Udhaar sales minus the payments they have made, computed on read
+   * — the same rule that keeps stock honest.
+   */
+}
+
+/** Money received against a customer's khata. */
+export interface Payment {
+  id?: number;
+  dayId: number;
+  customerId: number;
+  amount: number; // paise
+  paymentMode: PaymentMode;
+  note?: string;
+  createdAt: string;
 }
 
 export interface Supplier {

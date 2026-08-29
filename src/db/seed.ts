@@ -14,38 +14,38 @@ import type { RawMaterial, Item, Recipe, StockMove, User, Shop, Customer } from 
  * through Stock In.
  */
 export const SEED_RAW_MATERIALS: RawMaterial[] = [
-  { id: 1, name: 'Pav', unit: 'pc', avgCost: 400, reorderLevel: 100 },
-  { id: 2, name: 'Rava (semolina)', unit: 'g', avgCost: 5, reorderLevel: 2000 },
-  { id: 3, name: 'Poha', unit: 'g', avgCost: 6, reorderLevel: 2000 },
-  { id: 4, name: 'Wheat flour', unit: 'g', avgCost: 5, reorderLevel: 8000 },
-  { id: 5, name: 'Jowar / bajra flour', unit: 'g', avgCost: 6, reorderLevel: 3000 },
-  { id: 6, name: 'Rice', unit: 'g', avgCost: 6, reorderLevel: 6000 },
-  { id: 7, name: 'Toor dal', unit: 'g', avgCost: 14, reorderLevel: 2000 },
-  { id: 8, name: 'Besan (gram flour)', unit: 'g', avgCost: 9, reorderLevel: 3000 },
-  { id: 9, name: 'Potato', unit: 'g', avgCost: 3, reorderLevel: 8000 },
-  { id: 10, name: 'Onion', unit: 'g', avgCost: 4, reorderLevel: 8000 },
-  { id: 11, name: 'Tomato', unit: 'g', avgCost: 4, reorderLevel: 3000 },
-  { id: 12, name: 'Mixed vegetables', unit: 'g', avgCost: 5, reorderLevel: 4000 },
-  { id: 13, name: 'Peanuts', unit: 'g', avgCost: 14, reorderLevel: 1000 },
-  { id: 14, name: 'Paneer', unit: 'g', avgCost: 40, reorderLevel: 1000 },
-  { id: 15, name: 'Egg', unit: 'pc', avgCost: 700, reorderLevel: 60 },
-  { id: 16, name: 'Chicken (bone-in)', unit: 'g', avgCost: 18, reorderLevel: 5000 },
-  { id: 17, name: 'Coconut', unit: 'g', avgCost: 25, reorderLevel: 500 },
-  { id: 18, name: 'Milk', unit: 'g', avgCost: 6, reorderLevel: 5000 },
-  { id: 19, name: 'Curd', unit: 'g', avgCost: 8, reorderLevel: 3000 },
-  { id: 20, name: 'Sugar', unit: 'g', avgCost: 5, reorderLevel: 2000 },
-  { id: 21, name: 'Tea powder', unit: 'g', avgCost: 45, reorderLevel: 300 },
-  { id: 22, name: 'Coffee powder', unit: 'g', avgCost: 90, reorderLevel: 200 },
-  { id: 23, name: 'Refined oil', unit: 'g', avgCost: 15, reorderLevel: 5000 },
-  { id: 24, name: 'Ginger-garlic paste', unit: 'g', avgCost: 20, reorderLevel: 1000 },
-  { id: 25, name: 'Dry garlic chutney', unit: 'g', avgCost: 12, reorderLevel: 1000 },
-  { id: 26, name: 'Spice mix & salt', unit: 'g', avgCost: 35, reorderLevel: 1500 },
-  { id: 27, name: 'Coriander & green chili', unit: 'g', avgCost: 10, reorderLevel: 500 },
-  { id: 28, name: 'Maggi noodles', unit: 'pc', avgCost: 1200, reorderLevel: 30 },
-  { id: 29, name: 'Bread slice', unit: 'pc', avgCost: 150, reorderLevel: 100 },
-  { id: 30, name: 'Sweet (sheera / gulab jamun)', unit: 'g', avgCost: 20, reorderLevel: 1000 },
-  { id: 31, name: 'Soda water', unit: 'g', avgCost: 2, reorderLevel: 5000 },
-  { id: 32, name: 'Syrup', unit: 'g', avgCost: 20, reorderLevel: 500 },
+  { id: 1, name: 'Pav', unit: 'pc', category: 'Bakery', avgCost: 400, reorderLevel: 100 },
+  { id: 2, name: 'Rava (semolina)', unit: 'g', category: 'Grains & flour', avgCost: 5, reorderLevel: 2000 },
+  { id: 3, name: 'Poha', unit: 'g', category: 'Grains & flour', avgCost: 6, reorderLevel: 2000 },
+  { id: 4, name: 'Wheat flour', unit: 'g', category: 'Grains & flour', avgCost: 5, reorderLevel: 8000 },
+  { id: 5, name: 'Jowar / bajra flour', unit: 'g', category: 'Grains & flour', avgCost: 6, reorderLevel: 3000 },
+  { id: 6, name: 'Rice', unit: 'g', category: 'Grains & flour', avgCost: 6, reorderLevel: 6000 },
+  { id: 7, name: 'Toor dal', unit: 'g', category: 'Grains & flour', avgCost: 14, reorderLevel: 2000 },
+  { id: 8, name: 'Besan (gram flour)', unit: 'g', category: 'Grains & flour', avgCost: 9, reorderLevel: 3000 },
+  { id: 9, name: 'Potato', unit: 'g', category: 'Vegetables', avgCost: 3, reorderLevel: 8000 },
+  { id: 10, name: 'Onion', unit: 'g', category: 'Vegetables', avgCost: 4, reorderLevel: 8000 },
+  { id: 11, name: 'Tomato', unit: 'g', category: 'Vegetables', avgCost: 4, reorderLevel: 3000 },
+  { id: 12, name: 'Mixed vegetables', unit: 'g', category: 'Vegetables', avgCost: 5, reorderLevel: 4000 },
+  { id: 13, name: 'Peanuts', unit: 'g', category: 'Grocery', avgCost: 14, reorderLevel: 1000 },
+  { id: 14, name: 'Paneer', unit: 'g', category: 'Dairy', avgCost: 40, reorderLevel: 1000 },
+  { id: 15, name: 'Egg', unit: 'pc', category: 'Meat & eggs', avgCost: 700, reorderLevel: 60 },
+  { id: 16, name: 'Chicken (bone-in)', unit: 'g', category: 'Meat & eggs', avgCost: 18, reorderLevel: 5000 },
+  { id: 17, name: 'Coconut', unit: 'g', category: 'Vegetables', avgCost: 25, reorderLevel: 500 },
+  { id: 18, name: 'Milk', unit: 'g', category: 'Dairy', avgCost: 6, reorderLevel: 5000 },
+  { id: 19, name: 'Curd', unit: 'g', category: 'Dairy', avgCost: 8, reorderLevel: 3000 },
+  { id: 20, name: 'Sugar', unit: 'g', category: 'Grocery', avgCost: 5, reorderLevel: 2000 },
+  { id: 21, name: 'Tea powder', unit: 'g', category: 'Grocery', avgCost: 45, reorderLevel: 300 },
+  { id: 22, name: 'Coffee powder', unit: 'g', category: 'Grocery', avgCost: 90, reorderLevel: 200 },
+  { id: 23, name: 'Refined oil', unit: 'g', category: 'Oil & spices', avgCost: 15, reorderLevel: 5000 },
+  { id: 24, name: 'Ginger-garlic paste', unit: 'g', category: 'Oil & spices', avgCost: 20, reorderLevel: 1000 },
+  { id: 25, name: 'Dry garlic chutney', unit: 'g', category: 'Oil & spices', avgCost: 12, reorderLevel: 1000 },
+  { id: 26, name: 'Spice mix & salt', unit: 'g', category: 'Oil & spices', avgCost: 35, reorderLevel: 1500 },
+  { id: 27, name: 'Coriander & green chili', unit: 'g', category: 'Vegetables', avgCost: 10, reorderLevel: 500 },
+  { id: 28, name: 'Maggi noodles', unit: 'pc', category: 'Packaged', avgCost: 1200, reorderLevel: 30 },
+  { id: 29, name: 'Bread slice', unit: 'pc', category: 'Bakery', avgCost: 150, reorderLevel: 100 },
+  { id: 30, name: 'Sweet (sheera / gulab jamun)', unit: 'g', category: 'Grocery', avgCost: 20, reorderLevel: 1000 },
+  { id: 31, name: 'Soda water', unit: 'g', category: 'Packaged', avgCost: 2, reorderLevel: 5000 },
+  { id: 32, name: 'Syrup', unit: 'g', category: 'Packaged', avgCost: 20, reorderLevel: 500 },
 ];
 
 /**
@@ -259,7 +259,15 @@ export const SEED_RECIPES: Omit<Recipe, 'id'>[] = [
   { itemId: 27, rawMaterialId: 32, qtyPerUnit: 10 },
 ];
 
-export const SEED_CUSTOMERS: Customer[] = [];
+/**
+ * Khata regulars. Phone numbers are deliberately blank — the numbers that
+ * shipped with the demo data were invented, and a made-up number against a
+ * real customer is worse than none. Add the real ones from the Khata screen.
+ */
+export const SEED_CUSTOMERS: Customer[] = [
+  { id: 1, name: 'Auto stand bhaiya', phone: '' },
+  { id: 2, name: 'Salon next door', phone: '' },
+];
 
 export const SEED_SHOP: Shop = {
   id: 1,
@@ -292,23 +300,34 @@ export async function seedDatabaseIfEmpty(): Promise<boolean> {
     // let two concurrent callers (e.g. React StrictMode's double-invoked
     // effect) both see an empty table and race to insert the same
     // hardcoded seed IDs, throwing ConstraintError.
-    const count = await db.items.count();
-    if (count > 0) {
+    // Each master table is checked on its own rather than gating everything on
+    // one of them. A schema upgrade clears whichever tables it needs to rebuild
+    // and leaves the rest; gating the whole seed on `items` meant that clearing
+    // only rawMaterials left the kitchen permanently empty, because items was
+    // still populated and the seed returned early.
+    const [itemCount, rmCount, recipeCount, customerCount] = await Promise.all([
+      db.items.count(),
+      db.rawMaterials.count(),
+      db.recipes.count(),
+      db.customers.count(),
+    ]);
+
+    if (itemCount > 0 && rmCount > 0 && recipeCount > 0 && customerCount > 0) {
       return;
     }
 
-    // Seeding is gated on `items` being empty, but it writes to seven tables —
-    // and a schema upgrade may deliberately preserve some of them (shops and
-    // users survive the v3 rebuild). Rows carrying explicit IDs therefore have
-    // to upsert: a plain add would collide, throw ConstraintError, and roll the
-    // whole transaction back, leaving the app with no menu at all.
-    // Recipes and stock moves use auto-increment IDs, so they are added.
+    // Rows carrying explicit IDs upsert: an upgrade may preserve a table this
+    // seed also writes (shops and users survive every rebuild), and a plain add
+    // would collide, throw ConstraintError and roll the whole transaction back
+    // — leaving the shop with no menu at all. Recipes and stock moves use
+    // auto-increment IDs, so they are added only when their table is empty.
     await db.shops.put(SEED_SHOP);
     await db.users.bulkPut(SEED_USERS);
-    await db.rawMaterials.bulkPut(SEED_RAW_MATERIALS);
-    await db.items.bulkPut(SEED_ITEMS);
-    await db.recipes.bulkAdd(SEED_RECIPES as Recipe[]);
-    if (SEED_CUSTOMERS.length > 0) {
+
+    if (rmCount === 0) await db.rawMaterials.bulkPut(SEED_RAW_MATERIALS);
+    if (itemCount === 0) await db.items.bulkPut(SEED_ITEMS);
+    if (recipeCount === 0) await db.recipes.bulkAdd(SEED_RECIPES as Recipe[]);
+    if (customerCount === 0 && SEED_CUSTOMERS.length > 0) {
       await db.customers.bulkPut(SEED_CUSTOMERS);
     }
 

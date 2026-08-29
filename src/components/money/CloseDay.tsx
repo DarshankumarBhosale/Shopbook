@@ -6,6 +6,7 @@ import { useUIStore } from '../../store/uiStore';
 import { BigNum } from '../common/BigNum';
 import { Label } from '../common/Label';
 import { computeExpectedCash, computeVariance, isReconciliationValid } from '../../lib/cashRecon';
+import { computeKhataBalances, computeTotalOutstanding } from '../../lib/khata';
 import { formatRupees, toPaise } from '../../lib/format';
 
 export const CloseDay: React.FC = () => {
@@ -28,6 +29,16 @@ export const CloseDay: React.FC = () => {
     [openDay?.id]
   ) || [];
 
+  // Khata is settled at the 9pm close, so what is still on the book has to be
+  // in front of the owner at exactly this moment.
+  const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
+  const allSales = useLiveQuery(() => db.sales.toArray(), []) || [];
+  const allPayments = useLiveQuery(() => db.payments.toArray(), []) || [];
+
+  const khataBalances = computeKhataBalances(customers, allSales, allPayments);
+  const owing = khataBalances.filter((b) => b.outstandingPaise > 0);
+  const khataOutstanding = computeTotalOutstanding(khataBalances);
+
   // Totals in paise
   const cashSalesPaise = daySales
     .filter((s) => s.paymentMode === 'Cash')
@@ -41,11 +52,18 @@ export const CloseDay: React.FC = () => {
   const totalCogsPaise = daySales.reduce((sum, s) => sum + s.cogs, 0);
   const totalExpensesPaise = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
 
+  // Khata repaid in cash today is physically in the drawer and has to be
+  // counted, or every repayment shows up as an unexplained surplus.
+  const cashInPaise = allPayments
+    .filter((p) => p.dayId === openDay?.id && p.paymentMode === 'Cash')
+    .reduce((sum, p) => sum + p.amount, 0);
+
   const openingCashPaise = openDay?.openingCash || 0;
   const expectedCashPaise = computeExpectedCash(
     openingCashPaise,
     cashSalesPaise,
-    cashExpensesPaise
+    cashExpensesPaise,
+    cashInPaise
   );
 
   const countedPaise = counted !== '' ? toPaise(counted) : null;
@@ -91,6 +109,15 @@ export const CloseDay: React.FC = () => {
           </span>
         </div>
 
+        {cashInPaise > 0 && (
+          <div className="flex items-baseline justify-between py-1 text-body-m">
+            <span className="text-tx2">Khata received</span>
+            <span className="font-mono text-tx1 font-medium">
+              + {formatRupees(cashInPaise)}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-baseline justify-between py-1 text-body-m">
           <span className="text-tx2">Cash expenses</span>
           <span className="font-mono text-tx1 font-medium">
@@ -105,6 +132,35 @@ export const CloseDay: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* Khata still on the book at closing time */}
+      {owing.length > 0 && (
+        <div className="bg-surface border border-danger rounded-md p-3.5 mb-4">
+          <div className="flex items-baseline justify-between">
+            <span className="font-display text-[16px] tracking-[0.04em] uppercase text-danger">
+              Khata to collect
+            </span>
+            <span className="font-mono text-mono-m font-bold text-danger">
+              {formatRupees(khataOutstanding)}
+            </span>
+          </div>
+          <p className="text-body-s text-tx2 mt-1">
+            {owing
+              .map(
+                (b) =>
+                  `${b.name} ${formatRupees(b.outstandingPaise)}${
+                    b.daysOutstanding && b.daysOutstanding > 0
+                      ? ` (${b.daysOutstanding}d)`
+                      : ''
+                  }`
+              )
+              .join(' · ')}
+          </p>
+          <p className="text-body-s text-tx3 mt-1">
+            This is not cash in the drawer — collect it or carry it to tomorrow.
+          </p>
+        </div>
+      )}
 
       {/* Counted Cash Entry */}
       <div className="mb-2">

@@ -74,4 +74,22 @@ describe('seedDatabaseIfEmpty', () => {
     expect(pavAfterUpgrade).toBe(140);
     expect(await db.items.count()).toBe(25);
   });
+
+  it('refills a master table an upgrade cleared, even when items survived', async () => {
+    // The v5 upgrade rebuilt the raw material master but left items alone.
+    // Gating the whole seed on `items` being empty meant the kitchen came back
+    // with 25 dishes and zero ingredients, and never recovered on reload.
+    await seedDatabaseIfEmpty();
+    await db.rawMaterials.clear();
+    await db.customers.clear();
+
+    const seeded = await seedDatabaseIfEmpty();
+
+    expect(seeded).toBe(true);
+    expect(await db.rawMaterials.count()).toBe(32);
+    expect(await db.customers.count()).toBe(2);
+    // Untouched tables are not duplicated.
+    expect(await db.items.count()).toBe(25);
+    expect(await db.recipes.count()).toBe(103);
+  });
 });

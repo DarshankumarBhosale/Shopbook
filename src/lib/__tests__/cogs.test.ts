@@ -5,10 +5,10 @@ import type { Recipe, RawMaterial } from '../../db/types';
 
 describe('cogs pure functions', () => {
   const rawMaterials: RawMaterial[] = [
-    { id: 1, name: 'Pav', unit: 'pc', avgCost: 400, reorderLevel: 100 }, // 400 paise = ₹4.00
-    { id: 2, name: 'Potato', unit: 'g', avgCost: 3, reorderLevel: 8000 }, // 3 paise/g
-    { id: 3, name: 'Besan', unit: 'g', avgCost: 9, reorderLevel: 3000 }, // 9 paise/g
-    { id: 4, name: 'Oil', unit: 'ml', avgCost: 14, reorderLevel: 4000 }, // 14 paise/ml
+    { id: 1, name: 'Pav', unit: 'pc', category: 'Test', avgCost: 400, reorderLevel: 100 }, // 400 paise = ₹4.00
+    { id: 2, name: 'Potato', unit: 'g', category: 'Test', avgCost: 3, reorderLevel: 8000 }, // 3 paise/g
+    { id: 3, name: 'Besan', unit: 'g', category: 'Test', avgCost: 9, reorderLevel: 3000 }, // 9 paise/g
+    { id: 4, name: 'Oil', unit: 'ml', category: 'Test', avgCost: 14, reorderLevel: 4000 }, // 14 paise/ml
   ];
 
   const recipes: Recipe[] = [

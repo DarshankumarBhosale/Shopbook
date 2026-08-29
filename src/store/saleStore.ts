@@ -13,6 +13,8 @@ interface SaleState {
     dayId: number;
     paymentMode: PaymentMode;
     createdBy?: string;
+    /** Required for Udhaar — a khata entry has to belong to someone. */
+    customerId?: number;
   }) => Promise<number>; // returns total gross paise
 }
 
@@ -47,10 +49,16 @@ export const useSaleStore = create<SaleState>((set, get) => ({
 
   clearCart: () => set({ cart: {} }),
 
-  commitSale: async ({ dayId, paymentMode, createdBy }) => {
+  commitSale: async ({ dayId, paymentMode, createdBy, customerId }) => {
     const { cart } = get();
     const itemIds = Object.keys(cart).map(Number);
     if (itemIds.length === 0) throw new Error('Cart is empty');
+
+    // An Udhaar sale with no customer is money owed by nobody — it would
+    // never appear in any khata balance and would be silently lost.
+    if (paymentMode === 'Udhaar' && customerId === undefined) {
+      throw new Error('Udhaar needs a customer');
+    }
 
     // Fetch master records needed for calculation
     const [items, recipes, rawMaterials] = await Promise.all([
@@ -83,6 +91,7 @@ export const useSaleStore = create<SaleState>((set, get) => ({
       netAmount: grossPaise,
       cogs: cogsPaise,
       paymentMode,
+      customerId,
       createdBy: createdBy || 'User',
       createdAt: now,
     };

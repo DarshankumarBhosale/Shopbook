@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import type {
   Shop, User, DayBook, Item, RawMaterial, Recipe,
   Sale, SaleLine, StockMove, Purchase, Expense,
-  Customer, Supplier, Payout, AuditLogEntry,
+  Customer, Supplier, Payout, AuditLogEntry, Payment,
 } from './types';
 
 export class ShopBookDB extends Dexie {
@@ -21,6 +21,7 @@ export class ShopBookDB extends Dexie {
   suppliers!: Table<Supplier, number>;
   payouts!: Table<Payout, number>;
   auditLog!: Table<AuditLogEntry, number>;
+  payments!: Table<Payment, number>;
 
   constructor() {
     super('shopbook');
@@ -87,6 +88,25 @@ export class ShopBookDB extends Dexie {
       await Promise.all([
         tx.table('items').clear(),
         tx.table('recipes').clear(),
+      ]);
+    });
+
+    // v5 adds khata: Udhaar sales post against a customer, and money received
+    // is recorded in its own table so what a customer owes stays computed
+    // rather than stored. Raw materials also gain a category, so the buy list
+    // groups by where you actually shop. Only the raw material master is
+    // cleared and re-seeded; stock, sales and khata history are untouched.
+    this.version(5).stores({
+      payments: '++id, dayId, customerId, createdAt',
+    }).upgrade(async (tx) => {
+      // Seeding is gated on `items` being empty, so the item master has to be
+      // cleared for the reseed to run at all; recipes go with it because they
+      // are re-added rather than upserted. Stock moves, sales, expenses and
+      // the day book are all left intact.
+      await Promise.all([
+        tx.table('items').clear(),
+        tx.table('recipes').clear(),
+        tx.table('rawMaterials').clear(),
       ]);
     });
   }

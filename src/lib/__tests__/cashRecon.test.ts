@@ -11,6 +11,17 @@ describe('cashRecon pure functions', () => {
     expect(expected).toBe(164000);
   });
 
+  it('counts khata repaid in cash as money in the drawer', () => {
+    // Opening ₹900 + ₹15 cash sales + ₹100 khata repaid in cash = ₹1,015.
+    // Leaving the repayment out makes every collection look like a surplus
+    // and forces the owner to write a note explaining money that is correct.
+    expect(computeExpectedCash(90000, 1500, 0, 10000)).toBe(101500);
+  });
+
+  it('ignores khata repaid by UPI — it never reaches the drawer', () => {
+    expect(computeExpectedCash(90000, 1500, 0, 0)).toBe(91500);
+  });
+
   it('computes cash variance (counted - expected)', () => {
     // Expected: 164,000 paise (₹1,640)
     // Counted: ₹1,640 (164,000 paise) -> Variance: 0

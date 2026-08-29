@@ -4,6 +4,7 @@ import { Minus } from 'lucide-react';
 import { db } from '../../db/schema';
 import { useDayStore } from '../../store/dayStore';
 import { useSaleStore } from '../../store/saleStore';
+import { useKhataStore } from '../../store/khataStore';
 import { useUIStore } from '../../store/uiStore';
 import { ItemTile } from '../common/ItemTile';
 import { Label } from '../common/Label';
@@ -16,8 +17,14 @@ export const SellTab: React.FC = () => {
   const showToast = useUIStore((state) => state.showToast);
   const { cart, addToCart, decrementFromCart, commitSale } = useSaleStore();
 
+  const addCustomer = useKhataStore((state) => state.addCustomer);
+
   const cartSheetRef = useRef<HTMLDivElement | null>(null);
   const [sheetHeight, setSheetHeight] = useState<number>(0);
+  const [isPickingCustomer, setIsPickingCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+
+  const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
 
   // Reactive queries from Dexie
   const items = useLiveQuery(() => db.items.filter((i) => i.isActive).toArray(), []) || [];
@@ -93,7 +100,7 @@ export const SellTab: React.FC = () => {
     return () => observer.disconnect();
   }, [totalCartCount > 0, cartLines.length]);
 
-  const handlePayment = async (paymentMode: PaymentMode) => {
+  const handlePayment = async (paymentMode: PaymentMode, customerId?: number) => {
     if (!openDay?.id) {
       showToast('No active day found');
       return;
@@ -105,11 +112,31 @@ export const SellTab: React.FC = () => {
         dayId: openDay.id,
         paymentMode,
         createdBy: role || 'user',
+        customerId,
       });
-      showToast(`${formatRupees(grossPaise)} recorded · stock deducted`);
+      setIsPickingCustomer(false);
+      if (paymentMode === 'Udhaar') {
+        const who = customers.find((c) => c.id === customerId);
+        showToast(`${formatRupees(grossPaise)} on ${who ? who.name : 'khata'}`);
+      } else {
+        showToast(`${formatRupees(grossPaise)} recorded · stock deducted`);
+      }
     } catch (err) {
       console.error('Failed to commit sale:', err);
       showToast('Failed to record sale');
+    }
+  };
+
+  const handleNewKhataCustomer = async () => {
+    const name = newCustomerName.trim();
+    if (name === '') return;
+    try {
+      const id = await addCustomer(name);
+      setNewCustomerName('');
+      await handlePayment('Udhaar', id);
+    } catch (err) {
+      console.error('Failed to add customer:', err);
+      showToast('Could not add that name');
     }
   };
 
@@ -201,32 +228,99 @@ export const SellTab: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment action buttons (52px tall per design spec) */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handlePayment('Cash')}
-              className="tap h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center transition-transform active:scale-[0.97]"
-              style={{
-                backgroundColor: 'var(--color-marigold)',
-                color: 'var(--color-tx-inverse)',
-              }}
-            >
-              CASH
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePayment('UPI')}
-              className="tap h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center border transition-transform active:scale-[0.97]"
-              style={{
-                backgroundColor: 'var(--color-base)',
-                borderColor: 'var(--color-marigold)',
-                color: 'var(--color-tx1)',
-              }}
-            >
-              UPI
-            </button>
-          </div>
+          {/* Who is taking this on khata? Shown in place of the payment row. */}
+          {isPickingCustomer ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label className="mb-0">On whose khata?</Label>
+                <button
+                  type="button"
+                  onClick={() => setIsPickingCustomer(false)}
+                  className="tap text-body-s text-tx3 px-2 min-h-[44px]"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 max-h-[104px] overflow-y-auto noscroll">
+                {customers.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => handlePayment('Udhaar', c.id)}
+                    className="tap min-h-[44px] rounded-full px-4 text-body-m font-semibold border border-line-strong bg-base text-tx1"
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleNewKhataCustomer();
+                  }}
+                  placeholder="New name"
+                  aria-label="New khata customer name"
+                  className="flex-1 min-h-[44px] rounded-sm px-3 text-body-m bg-base border border-line text-tx1 placeholder:text-tx3 focus:border-line-strong focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleNewKhataCustomer}
+                  disabled={newCustomerName.trim() === ''}
+                  className="tap min-h-[44px] px-4 rounded-sm font-display text-[15px] tracking-[0.05em] uppercase disabled:opacity-40"
+                  style={{
+                    backgroundColor: 'var(--color-marigold)',
+                    color: 'var(--color-tx-inverse)',
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Payment action buttons (52px tall per design spec) */
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handlePayment('Cash')}
+                className="tap h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center transition-transform active:scale-[0.97]"
+                style={{
+                  backgroundColor: 'var(--color-marigold)',
+                  color: 'var(--color-tx-inverse)',
+                }}
+              >
+                CASH
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePayment('UPI')}
+                className="tap h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center border transition-transform active:scale-[0.97]"
+                style={{
+                  backgroundColor: 'var(--color-base)',
+                  borderColor: 'var(--color-marigold)',
+                  color: 'var(--color-tx1)',
+                }}
+              >
+                UPI
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPickingCustomer(true)}
+                className="tap h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center border transition-transform active:scale-[0.97]"
+                style={{
+                  backgroundColor: 'var(--color-base)',
+                  borderColor: 'var(--color-line-strong)',
+                  color: 'var(--color-tx2)',
+                }}
+              >
+                KHATA
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
