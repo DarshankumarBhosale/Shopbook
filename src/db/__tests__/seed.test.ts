@@ -30,4 +30,22 @@ describe('seedDatabaseIfEmpty', () => {
     expect(seededAgain).toBe(false);
     expect(await db.items.count()).toBe(27);
   });
+
+  it('seeds even when a schema upgrade has preserved shops and users', async () => {
+    // Reproduces the state left by the v3 upgrade, which clears the item and
+    // raw-material masters but deliberately keeps shops and users. Rows with
+    // explicit IDs must upsert here — a plain add collides on shop id 1, and
+    // the resulting ConstraintError rolls the whole seed back, leaving the
+    // shop with an empty menu.
+    await db.shops.put({ id: 1, name: 'Existing shop', address: 'Somewhere', weeklyOff: 'Monday' });
+    await db.users.put({ id: 1, name: 'Owner', role: 'owner', pin: '1234' });
+
+    const seeded = await seedDatabaseIfEmpty();
+
+    expect(seeded).toBe(true);
+    expect(await db.items.count()).toBe(27);
+    expect(await db.rawMaterials.count()).toBe(32);
+    expect(await db.shops.count()).toBe(1);
+    expect((await db.shops.get(1))?.name).toBe('Aaisaheb Snacks Center');
+  });
 });

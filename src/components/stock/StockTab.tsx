@@ -6,7 +6,7 @@ import { useUIStore } from '../../store/uiStore';
 import { useStockStore, WASTAGE_REASONS } from '../../store/stockStore';
 import { computeAllStock, computeLowStock } from '../../lib/stockMoves';
 import { Label } from '../common/Label';
-import { formatRupees } from '../../lib/format';
+import { formatRupees, formatUnitRate } from '../../lib/format';
 
 type Sheet = 'in' | 'waste' | 'audit' | null;
 
@@ -221,7 +221,7 @@ export const StockTab: React.FC = () => {
               <div>
                 <div className="text-body-m text-tx1">{rm.name}</div>
                 <div className="text-body-s text-tx3">
-                  {formatRupees(rm.avgCost * have)} at {formatRupees(rm.avgCost)}/{rm.unit}
+                  {formatRupees(rm.avgCost * have)} at {formatUnitRate(rm.avgCost, rm.unit)}
                 </div>
               </div>
               <div

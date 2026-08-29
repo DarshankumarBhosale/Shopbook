@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeLineCOGS, computeSaleCOGS } from '../cogs';
+import { formatUnitRate } from '../format';
 import type { Recipe, RawMaterial } from '../../db/types';
 
 describe('cogs pure functions', () => {
@@ -35,5 +36,18 @@ describe('cogs pure functions', () => {
 
     const totalCogs = computeSaleCOGS(saleLines, recipes, rawMaterials);
     expect(totalCogs).toBe(2030);
+  });
+});
+
+describe('formatUnitRate', () => {
+  it('scales per-gram and per-ml rates to the unit a supplier bills in', () => {
+    expect(formatUnitRate(9, 'g')).toBe('₹90/kg');
+    expect(formatUnitRate(28, 'g')).toBe('₹280/kg');
+    expect(formatUnitRate(6, 'ml')).toBe('₹60/L');
+  });
+
+  it('leaves countable units alone', () => {
+    expect(formatUnitRate(700, 'pc')).toBe('₹7/pc');
+    expect(formatUnitRate(400, 'pc')).toBe('₹4/pc');
   });
 });

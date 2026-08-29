@@ -19,6 +19,19 @@ export function formatRupeesRaw(rupees: number): string {
 }
 
 /**
+ * Formats a raw material's cost in the unit it is actually bought in.
+ *
+ * Most materials are costed per gram or millilitre, where the rate is a few
+ * paise and rounds to "₹0". Scaling those to a kilo or litre gives the number
+ * the shop would recognise from a supplier bill (e.g. besan at ₹90/kg).
+ */
+export function formatUnitRate(costPerUnitPaise: number, unit: string): string {
+  if (unit === 'g') return `${formatRupees(costPerUnitPaise * 1000)}/kg`;
+  if (unit === 'ml') return `${formatRupees(costPerUnitPaise * 1000)}/L`;
+  return `${formatRupees(costPerUnitPaise)}/${unit}`;
+}
+
+/**
  * Converts rupee string/number to paise integer.
  */
 export function toPaise(rupees: number | string): number {

@@ -64,6 +64,20 @@ export class ShopBookDB extends Dexie {
         tx.table('customers').clear(),
       ]);
     });
+
+    // v3 rebuilds the raw material master and recipes from the shop's
+    // standardized recipe book. Raw-material IDs are reassigned, so recipes
+    // and stockMoves (which key on rmId) must be rebuilt rather than kept.
+    // Items keep their IDs, so trading history — dayBook, sales, saleLines
+    // and expenses — is preserved and still resolves.
+    this.version(3).stores({}).upgrade(async (tx) => {
+      await Promise.all([
+        tx.table('items').clear(),
+        tx.table('rawMaterials').clear(),
+        tx.table('recipes').clear(),
+        tx.table('stockMoves').clear(),
+      ]);
+    });
   }
 }
 
