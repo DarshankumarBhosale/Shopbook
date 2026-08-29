@@ -62,8 +62,24 @@
 /* ─── Base resets ───
    These MUST stay inside `@layer base`. Unlayered CSS beats layered CSS in the
    cascade regardless of specificity, so an unlayered `* { padding: 0 }` silently
-   overrides every Tailwind p-*/m-* utility in the app. */
+   overrides every Tailwind padding and margin utility in the app.
+   (Careful writing that as a glob here — a star-slash ends this comment early
+   and everything after it is parsed as broken CSS.) */
 @layer base {
+  /* The app column width, in one place. The Shell, the tab bar, the cart sheet
+     and the toast all have to agree on it — they are separate fixed-position
+     elements, and any drift between them shows up as a misaligned bar. Wider on
+     a tablet so the screen isn't a narrow strip with empty margins. */
+  :root {
+    --app-width: 28rem;
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --app-width: 42rem;
+    }
+  }
+
   *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;

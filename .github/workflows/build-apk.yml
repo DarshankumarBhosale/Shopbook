@@ -1,4 +1,4 @@
-name: Build debug APK
+name: Build release APK
 
 on:
   push:
@@ -41,28 +41,28 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x android/gradlew
 
-      - name: Build debug APK
+      - name: Build release APK
         id: gradle
         run: |
           set -o pipefail
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
 
       - name: Publish APK and build log
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          APK=android/app/build/outputs/apk/release/app-release.apk
           FILES="build.log"
           if [ -f "$APK" ]; then
-            cp "$APK" shopbook-debug.apk
-            FILES="$FILES shopbook-debug.apk"
+            cp "$APK" shopbook.apk
+            FILES="$FILES shopbook.apk"
           fi
           gh release delete ci-latest --yes --cleanup-tag || true
           gh release create ci-latest $FILES \
             --title "Latest CI build" \
-            --notes "Automated build of ${{ github.sha }}. Install shopbook-debug.apk on your phone." \
+            --notes "Automated build of ${{ github.sha }}. Install shopbook.apk on your phone or tablet." \
             --prerelease
 
       # Release assets on a private repo need an API token to download. The APK
@@ -72,12 +72,12 @@ jobs:
       - name: Publish APK to the apk branch
         if: success()
         run: |
-          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          APK=android/app/build/outputs/apk/release/app-release.apk
           [ -f "$APK" ] || exit 0
           WORK=$(mktemp -d)
-          cp "$APK" "$WORK/shopbook-debug.apk"
+          cp "$APK" "$WORK/shopbook.apk"
           cd "$WORK"
-          echo "Debug APK built from ${{ github.sha }}." > README.md
+          echo "Release APK built from ${{ github.sha }}." > README.md
           git init -q
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"

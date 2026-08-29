@@ -187,7 +187,7 @@ export const SellTab: React.FC = () => {
           paddingBottom: dynamicBottomPadding,
         }}
       >
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
           {sortedItems.map((item) => {
             const qtyInCart = item.id ? cart[item.id] || 0 : 0;
             return (
@@ -208,7 +208,7 @@ export const SellTab: React.FC = () => {
       {totalCartCount > 0 && (
         <div
           ref={cartSheetRef}
-          className="fixed left-1/2 -translate-x-1/2 w-full max-w-md bg-surface border-t-2 z-40 px-4 pt-3 pb-4 shadow-2xl transition-transform"
+          className="fixed left-1/2 -translate-x-1/2 w-full max-w-[var(--app-width)] bg-surface border-t-2 z-40 px-4 pt-3 pb-4 shadow-2xl transition-transform"
           style={{
             bottom: '62px',
             borderColor: 'var(--color-line-strong)',

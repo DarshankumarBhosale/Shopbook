@@ -51,3 +51,18 @@ describe('formatUnitRate', () => {
     expect(formatUnitRate(400, 'pc')).toBe('₹4/pc');
   });
 });
+
+describe('formatUnitRate on cheap countable goods', () => {
+  it('keeps the paise so a thin margin stays visible', () => {
+    // 91p cost against a ₹1 chocolate is a 9% margin. Rounding it to "₹1"
+    // makes the item look like it sells at cost.
+    expect(formatUnitRate(91, 'pc')).toBe('₹0.91/pc');
+    expect(formatUnitRate(455, 'pc')).toBe('₹4.55/pc');
+    expect(formatUnitRate(3850, 'pc')).toBe('₹38.50/pc');
+  });
+
+  it('still shows whole rupees plainly', () => {
+    expect(formatUnitRate(700, 'pc')).toBe('₹7/pc');
+    expect(formatUnitRate(1800, 'pc')).toBe('₹18/pc');
+  });
+});

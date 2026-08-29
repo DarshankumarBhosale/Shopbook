@@ -16,10 +16,28 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // One fixed key for every build. Android only allows an update when the new
+    // APK is signed with the same key as the installed one, and the auto-generated
+    // debug keystore differs on every machine and every CI run — so each build
+    // was refusing to install over the last, forcing an uninstall that wiped the
+    // whole shop database.
+    signingConfigs {
+        shopbook {
+            storeFile file('shopbook-release.keystore')
+            storePassword 'shopbook'
+            keyAlias 'shopbook'
+            keyPassword 'shopbook'
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig signingConfigs.shopbook
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.shopbook
         }
     }
 }

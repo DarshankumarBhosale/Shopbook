@@ -11,7 +11,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-base text-tx1 font-body flex justify-center selection:bg-primary selection:text-base">
-      <div className="w-full max-w-md min-h-screen flex flex-col relative bg-base shadow-2xl border-x border-line/30">
+      <div className="w-full max-w-[var(--app-width)] min-h-screen flex flex-col relative bg-base shadow-2xl border-x border-line/30">
         {children}
         <Toast message={toast} />
       </div>

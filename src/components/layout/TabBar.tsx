@@ -24,7 +24,7 @@ export const TabBar: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-surface border-t border-line z-40 flex items-center justify-around h-[62px]">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[var(--app-width)] bg-surface border-t border-line z-40 flex items-center justify-around h-[62px]">
       {tabs.map((t) => {
         const Icon = t.icon;
         const isActive = tab === t.id;

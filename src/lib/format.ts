@@ -28,6 +28,13 @@ export function formatRupeesRaw(rupees: number): string {
 export function formatUnitRate(costPerUnitPaise: number, unit: string): string {
   if (unit === 'g') return `${formatRupees(costPerUnitPaise * 1000)}/kg`;
   if (unit === 'ml') return `${formatRupees(costPerUnitPaise * 1000)}/L`;
+
+  // Cheap countable goods need the paise. A 91p chocolate rounded to "₹1"
+  // reads as zero margin against its ₹1 price, hiding the 9% that is there.
+  if (costPerUnitPaise > 0 && costPerUnitPaise % 100 !== 0 && costPerUnitPaise < 10000) {
+    return `₹${(costPerUnitPaise / 100).toFixed(2)}/${unit}`;
+  }
+
   return `${formatRupees(costPerUnitPaise)}/${unit}`;
 }
 
