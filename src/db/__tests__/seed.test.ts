@@ -19,7 +19,7 @@ describe('seedDatabaseIfEmpty', () => {
     ]);
 
     expect([firstSeeded, secondSeeded].filter(Boolean)).toHaveLength(1);
-    expect(await db.items.count()).toBe(27);
+    expect(await db.items.count()).toBe(25);
     expect(await db.shops.count()).toBe(1);
   });
 
@@ -28,7 +28,7 @@ describe('seedDatabaseIfEmpty', () => {
     const seededAgain = await seedDatabaseIfEmpty();
 
     expect(seededAgain).toBe(false);
-    expect(await db.items.count()).toBe(27);
+    expect(await db.items.count()).toBe(25);
   });
 
   it('seeds even when a schema upgrade has preserved shops and users', async () => {
@@ -43,9 +43,35 @@ describe('seedDatabaseIfEmpty', () => {
     const seeded = await seedDatabaseIfEmpty();
 
     expect(seeded).toBe(true);
-    expect(await db.items.count()).toBe(27);
+    expect(await db.items.count()).toBe(25);
     expect(await db.rawMaterials.count()).toBe(32);
     expect(await db.shops.count()).toBe(1);
     expect((await db.shops.get(1))?.name).toBe('Aaisaheb Snacks Center');
+  });
+
+  it('does not re-open stock for materials that already have a ledger', async () => {
+    // Reproduces the v4 upgrade, which refreshes the menu but deliberately
+    // keeps stockMoves so counts on hand survive. Seeding a second opening
+    // balance here would silently double the stock in the kitchen.
+    await seedDatabaseIfEmpty();
+    const pavAfterSeed = (await db.stockMoves.where('rmId').equals(1).toArray())
+      .reduce((sum, m) => sum + m.qty, 0);
+
+    // A day of trading moves the ledger away from its opening balance.
+    await db.stockMoves.add({
+      dayId: 1, rmId: 1, type: 'sale', qty: -20, createdAt: new Date().toISOString(),
+    });
+
+    // v4-style upgrade: menu rebuilt, stock ledger left intact.
+    await db.items.clear();
+    await db.recipes.clear();
+    await seedDatabaseIfEmpty();
+
+    const pavAfterUpgrade = (await db.stockMoves.where('rmId').equals(1).toArray())
+      .reduce((sum, m) => sum + m.qty, 0);
+
+    expect(pavAfterSeed).toBe(160);
+    expect(pavAfterUpgrade).toBe(140);
+    expect(await db.items.count()).toBe(25);
   });
 });

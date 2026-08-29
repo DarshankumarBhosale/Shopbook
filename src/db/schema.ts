@@ -78,6 +78,17 @@ export class ShopBookDB extends Dexie {
         tx.table('stockMoves').clear(),
       ]);
     });
+
+    // v4 drops Misal Pav and Sheera from the menu and corrects the chicken
+    // rate. Only items and recipes are cleared so the seeder rebuilds them;
+    // raw materials upsert in place and stockMoves are left alone, so stock
+    // counts on hand survive this upgrade.
+    this.version(4).stores({}).upgrade(async (tx) => {
+      await Promise.all([
+        tx.table('items').clear(),
+        tx.table('recipes').clear(),
+      ]);
+    });
   }
 }
 

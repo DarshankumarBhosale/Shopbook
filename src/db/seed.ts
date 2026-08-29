@@ -29,7 +29,7 @@ export const SEED_RAW_MATERIALS: RawMaterial[] = [
   { id: 13, name: 'Peanuts', unit: 'g', avgCost: 14, reorderLevel: 1000 },
   { id: 14, name: 'Paneer', unit: 'g', avgCost: 40, reorderLevel: 1000 },
   { id: 15, name: 'Egg', unit: 'pc', avgCost: 700, reorderLevel: 60 },
-  { id: 16, name: 'Chicken (bone-in)', unit: 'g', avgCost: 28, reorderLevel: 5000 },
+  { id: 16, name: 'Chicken (bone-in)', unit: 'g', avgCost: 18, reorderLevel: 5000 },
   { id: 17, name: 'Coconut', unit: 'g', avgCost: 25, reorderLevel: 500 },
   { id: 18, name: 'Milk', unit: 'g', avgCost: 6, reorderLevel: 5000 },
   { id: 19, name: 'Curd', unit: 'g', avgCost: 8, reorderLevel: 3000 },
@@ -53,9 +53,9 @@ export const SEED_RAW_MATERIALS: RawMaterial[] = [
  * Counter prices match the shop's recipe book. Online prices are counter + ~30 %,
  * rounded up to the nearest ₹5, to absorb aggregator commission.
  *
- * Misal Pav and Sheera are on the printed menu but seeded inactive: Misal Pav is
- * currently not available, and Sheera has no price and no standalone recipe.
- * Inactive items stay off the Sell grid but remain in the item master.
+ * Misal Pav (id 7) and Sheera (id 8) were dropped from the menu. Their IDs are
+ * left vacant rather than reused: sale lines key on itemId, so renumbering the
+ * items below them would silently repoint past sales at the wrong dish.
  */
 export const SEED_ITEMS: Item[] = [
   // ── Breakfast ──
@@ -65,31 +65,29 @@ export const SEED_ITEMS: Item[] = [
   { id: 4, name: 'Paneer Paratha', category: 'Breakfast', sellPriceCounter: 5000, sellPriceOnline: 6500, sortOrder: 4, isActive: true },
   { id: 5, name: 'Gol Bhaji', category: 'Breakfast', sellPriceCounter: 3500, sellPriceOnline: 5000, sortOrder: 5, isActive: true },
   { id: 6, name: 'Kanda Bhaji', category: 'Breakfast', sellPriceCounter: 3500, sellPriceOnline: 5000, sortOrder: 6, isActive: true },
-  { id: 7, name: 'Misal Pav', category: 'Breakfast', sellPriceCounter: 0, sellPriceOnline: 0, sortOrder: 7, isActive: false },
-  { id: 8, name: 'Sheera', category: 'Breakfast', sellPriceCounter: 0, sellPriceOnline: 0, sortOrder: 8, isActive: false },
-  { id: 9, name: 'Plain Maggie', category: 'Breakfast', sellPriceCounter: 3500, sellPriceOnline: 5000, sortOrder: 9, isActive: true },
-  { id: 10, name: 'Bread Patice', category: 'Breakfast', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 10, isActive: true },
-  { id: 11, name: 'Vada Pav', category: 'Breakfast', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 11, isActive: true },
-  { id: 12, name: 'Boil Egg', category: 'Breakfast', sellPriceCounter: 1300, sellPriceOnline: 2000, sortOrder: 12, isActive: true },
-  { id: 13, name: 'Egg Paratha', category: 'Breakfast', sellPriceCounter: 3000, sellPriceOnline: 4000, sortOrder: 13, isActive: true },
-  { id: 14, name: 'Omelette Pav', category: 'Breakfast', sellPriceCounter: 3500, sellPriceOnline: 5000, sortOrder: 14, isActive: true },
+  { id: 9, name: 'Plain Maggie', category: 'Breakfast', sellPriceCounter: 3500, sellPriceOnline: 5000, sortOrder: 7, isActive: true },
+  { id: 10, name: 'Bread Patice', category: 'Breakfast', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 8, isActive: true },
+  { id: 11, name: 'Vada Pav', category: 'Breakfast', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 9, isActive: true },
+  { id: 12, name: 'Boil Egg', category: 'Breakfast', sellPriceCounter: 1300, sellPriceOnline: 2000, sortOrder: 10, isActive: true },
+  { id: 13, name: 'Egg Paratha', category: 'Breakfast', sellPriceCounter: 3000, sellPriceOnline: 4000, sortOrder: 11, isActive: true },
+  { id: 14, name: 'Omelette Pav', category: 'Breakfast', sellPriceCounter: 3500, sellPriceOnline: 5000, sortOrder: 12, isActive: true },
 
   // ── Main course ──
-  { id: 15, name: 'Rice Plate', category: 'Main Course', sellPriceCounter: 9000, sellPriceOnline: 12000, sortOrder: 15, isActive: true },
-  { id: 16, name: 'Poori Bhaji Thali', category: 'Main Course', sellPriceCounter: 13000, sellPriceOnline: 17000, sortOrder: 16, isActive: true },
-  { id: 17, name: 'Poori Bhaji', category: 'Main Course', sellPriceCounter: 6000, sellPriceOnline: 8000, sortOrder: 17, isActive: true },
-  { id: 18, name: 'Egg Masala', category: 'Main Course', sellPriceCounter: 6000, sellPriceOnline: 8000, sortOrder: 18, isActive: true },
-  { id: 19, name: 'Chicken Thali', category: 'Main Course', sellPriceCounter: 16000, sellPriceOnline: 21000, sortOrder: 19, isActive: true },
-  { id: 20, name: 'Chicken Masala', category: 'Main Course', sellPriceCounter: 35000, sellPriceOnline: 45500, sortOrder: 20, isActive: true },
-  { id: 21, name: 'Chapati', category: 'Main Course', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 21, isActive: true },
-  { id: 22, name: 'Bhakri', category: 'Main Course', sellPriceCounter: 2000, sellPriceOnline: 3000, sortOrder: 22, isActive: true },
+  { id: 15, name: 'Rice Plate', category: 'Main Course', sellPriceCounter: 9000, sellPriceOnline: 12000, sortOrder: 13, isActive: true },
+  { id: 16, name: 'Poori Bhaji Thali', category: 'Main Course', sellPriceCounter: 13000, sellPriceOnline: 17000, sortOrder: 14, isActive: true },
+  { id: 17, name: 'Poori Bhaji', category: 'Main Course', sellPriceCounter: 6000, sellPriceOnline: 8000, sortOrder: 15, isActive: true },
+  { id: 18, name: 'Egg Masala', category: 'Main Course', sellPriceCounter: 6000, sellPriceOnline: 8000, sortOrder: 16, isActive: true },
+  { id: 19, name: 'Chicken Thali', category: 'Main Course', sellPriceCounter: 16000, sellPriceOnline: 21000, sortOrder: 17, isActive: true },
+  { id: 20, name: 'Chicken Masala', category: 'Main Course', sellPriceCounter: 35000, sellPriceOnline: 45500, sortOrder: 18, isActive: true },
+  { id: 21, name: 'Chapati', category: 'Main Course', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 19, isActive: true },
+  { id: 22, name: 'Bhakri', category: 'Main Course', sellPriceCounter: 2000, sellPriceOnline: 3000, sortOrder: 20, isActive: true },
 
   // ── Beverage ──
-  { id: 23, name: 'Tea', category: 'Beverage', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 23, isActive: true },
-  { id: 24, name: 'Coffee', category: 'Beverage', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 24, isActive: true },
-  { id: 25, name: 'Lassi', category: 'Beverage', sellPriceCounter: 3000, sellPriceOnline: 4000, sortOrder: 25, isActive: true },
-  { id: 26, name: 'Masala Taak', category: 'Beverage', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 26, isActive: true },
-  { id: 27, name: 'Soda', category: 'Beverage', sellPriceCounter: 2000, sellPriceOnline: 3000, sortOrder: 27, isActive: true },
+  { id: 23, name: 'Tea', category: 'Beverage', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 21, isActive: true },
+  { id: 24, name: 'Coffee', category: 'Beverage', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 22, isActive: true },
+  { id: 25, name: 'Lassi', category: 'Beverage', sellPriceCounter: 3000, sellPriceOnline: 4000, sortOrder: 23, isActive: true },
+  { id: 26, name: 'Masala Taak', category: 'Beverage', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 24, isActive: true },
+  { id: 27, name: 'Soda', category: 'Beverage', sellPriceCounter: 2000, sellPriceOnline: 3000, sortOrder: 25, isActive: true },
 ];
 
 /**
@@ -149,8 +147,6 @@ export const SEED_RECIPES: Omit<Recipe, 'id'>[] = [
   { itemId: 6, rawMaterialId: 8, qtyPerUnit: 40 },
   { itemId: 6, rawMaterialId: 23, qtyPerUnit: 20 },
   { itemId: 6, rawMaterialId: 26, qtyPerUnit: 5 },
-
-  // Misal Pav (7) and Sheera (8) are inactive and have no recipe yet.
 
   // Plain Maggie — one 70 g packet with its tastemaker
   { itemId: 9, rawMaterialId: 28, qtyPerUnit: 1 },
@@ -316,9 +312,17 @@ export async function seedDatabaseIfEmpty(): Promise<boolean> {
       await db.customers.bulkPut(SEED_CUSTOMERS);
     }
 
-    // Initial stock moves for all raw materials
+    // Opening stock, but only for materials that have no ledger yet. A later
+    // schema upgrade may re-run this seed to refresh the menu while leaving
+    // stockMoves intact; seeding unconditionally would append a second opening
+    // balance for every material and silently double the stock on hand.
+    const existingMoves = await db.stockMoves.toArray();
+    const alreadyStocked = new Set(existingMoves.map((m) => m.rmId));
     const now = new Date().toISOString();
-    const initialMoves: StockMove[] = SEED_RAW_MATERIALS.map((rm) => ({
+
+    const initialMoves: StockMove[] = SEED_RAW_MATERIALS.filter(
+      (rm) => !alreadyStocked.has(rm.id!)
+    ).map((rm) => ({
       dayId: null,
       rmId: rm.id!,
       type: 'initial',
@@ -328,7 +332,9 @@ export async function seedDatabaseIfEmpty(): Promise<boolean> {
       createdAt: now,
     }));
 
-    await db.stockMoves.bulkAdd(initialMoves);
+    if (initialMoves.length > 0) {
+      await db.stockMoves.bulkAdd(initialMoves);
+    }
     seeded = true;
   });
 

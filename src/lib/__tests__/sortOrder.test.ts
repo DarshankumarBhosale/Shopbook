@@ -19,10 +19,10 @@ describe('sortOrder Position Stability & Master Editing', () => {
     const initialItems = await db.items.toArray();
     const sortedInitial = [...initialItems].sort((a, b) => a.sortOrder - b.sortOrder);
 
-    // Initial sort order check: menu order, 1 to 27
+    // Initial sort order check: menu order, 1 to 25
     expect(sortedInitial[0].name).toBe('Plain Upma'); // sortOrder: 1
-    expect(sortedInitial[22].name).toBe('Tea');       // sortOrder: 23
-    expect(sortedInitial[23].name).toBe('Coffee');    // sortOrder: 24
+    expect(sortedInitial[20].name).toBe('Tea');       // sortOrder: 21
+    expect(sortedInitial[21].name).toBe('Coffee');    // sortOrder: 22
 
     // Commit sales for Tea and Coffee
     useSaleStore.getState().addToCart(23); // Tea
@@ -36,14 +36,14 @@ describe('sortOrder Position Stability & Master Editing', () => {
 
     expect(sortedAfter.map((i) => i.id)).toEqual(sortedInitial.map((i) => i.id));
     expect(sortedAfter[0].name).toBe('Plain Upma');
-    expect(sortedAfter[22].name).toBe('Tea');
-    expect(sortedAfter[23].name).toBe('Coffee');
+    expect(sortedAfter[20].name).toBe('Tea');
+    expect(sortedAfter[21].name).toBe('Coffee');
   });
 
   it('allows owner to reorder tiles in Master screen', async () => {
-    // Owner sets Tea (id: 23) to sortOrder 1 and Plain Upma (id: 1) to sortOrder 23
+    // Owner sets Tea (id: 23) to sortOrder 1 and Plain Upma (id: 1) to sortOrder 21
     await db.items.update(23, { sortOrder: 1 });
-    await db.items.update(1, { sortOrder: 23 });
+    await db.items.update(1, { sortOrder: 21 });
 
     const items = await db.items.toArray();
     const sorted = [...items].sort((a, b) => a.sortOrder - b.sortOrder);
