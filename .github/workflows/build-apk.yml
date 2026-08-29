@@ -64,3 +64,25 @@ jobs:
             --title "Latest CI build" \
             --notes "Automated build of ${{ github.sha }}. Install shopbook-debug.apk on your phone." \
             --prerelease
+
+      # Release assets on a private repo need an API token to download. The APK
+      # is also force-pushed to a single-commit `apk` branch so it can be pulled
+      # with ordinary git access. The branch is recreated from scratch each run,
+      # so build artefacts never accumulate in history.
+      - name: Publish APK to the apk branch
+        if: success()
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          [ -f "$APK" ] || exit 0
+          WORK=$(mktemp -d)
+          cp "$APK" "$WORK/shopbook-debug.apk"
+          cd "$WORK"
+          echo "Debug APK built from ${{ github.sha }}." > README.md
+          git init -q
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git checkout -q -b apk
+          git add -A
+          git commit -q -m "APK for ${{ github.sha }}"
+          git push -q --force \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" apk
