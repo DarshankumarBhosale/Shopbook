@@ -43,26 +43,31 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
-/* ─── Base resets ─── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ─── Base resets ───
+   These MUST stay inside `@layer base`. Unlayered CSS beats layered CSS in the
+   cascade regardless of specificity, so an unlayered `* { padding: 0 }` silently
+   overrides every Tailwind p-*/m-* utility in the app. */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-html {
-  font-size: 16px;
-  -webkit-text-size-adjust: 100%;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-body {
-  font-family: var(--font-body);
-  color: var(--color-tx1);
-  background: var(--color-base);
-  line-height: 1.5;
-  min-height: 100dvh;
+  body {
+    font-family: var(--font-body);
+    color: var(--color-tx1);
+    background: var(--color-base);
+    line-height: 1.5;
+    min-height: 100dvh;
+  }
 }
 
 /* ─── Typography utilities ─── */
@@ -145,30 +150,35 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Interactive states ─── */
-.tap {
-  transition: transform 0.08s ease-out, background 0.12s ease;
-  -webkit-tap-highlight-color: transparent;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
+/* ─── Interactive states ───
+   In `@layer components` so Tailwind border utilities still apply to a `.tap`
+   element; unlayered, `border: none` here would erase all of them. */
+@layer components {
+  .tap {
+    transition: transform 0.08s ease-out, background 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    outline: none;
+  }
 
-.tap:active {
-  transform: scale(0.97);
-}
+  .tap:active {
+    transform: scale(0.97);
+  }
 
-.tap:focus-visible {
-  outline: 2px solid var(--color-marigold);
-  outline-offset: 2px;
+  .tap:focus-visible {
+    outline: 2px solid var(--color-marigold);
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tap {
-    transition: none;
-  }
-  .tap:active {
-    transform: none;
+  @layer components {
+    .tap {
+      transition: none;
+    }
+    .tap:active {
+      transform: none;
+    }
   }
 }
 
@@ -186,14 +196,18 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Input resets ─── */
-input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-}
+/* ─── Input resets ───
+   Layered so that font-size/family utilities on an input (e.g. the big cash
+   keypads) are not overridden by `inherit`. */
+@layer base {
+  input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+  }
 
-input:focus, select:focus, textarea:focus {
-  outline: 2px solid var(--color-line-strong);
-  outline-offset: 0;
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--color-line-strong);
+    outline-offset: 0;
+  }
 }

@@ -1,14 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../../db/schema';
 import { BigNum } from '../common/BigNum';
 import { Label } from '../common/Label';
 import { useDayStore } from '../../store/dayStore';
 import { useUIStore } from '../../store/uiStore';
+import { getCarryForwardCash } from '../../lib/dayBook';
+import { formatRupees, toRupees } from '../../lib/format';
 
 export const StartDay: React.FC = () => {
   const [openingCash, setOpeningCash] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const openNewDay = useDayStore((state) => state.openNewDay);
   const showToast = useUIStore((state) => state.showToast);
+
+  // Spec §A: the drawer isn't emptied overnight, so today opens with whatever
+  // was counted at the last close. Prefilled once, then left alone so it never
+  // fights the owner as they recount.
+  const closedDays = useLiveQuery(
+    () => db.dayBook.filter((d) => d.status === 'closed').toArray(),
+    []
+  );
+  const carryForwardPaise = getCarryForwardCash(closedDays ?? []);
+  const hasPrefilled = useRef(false);
+
+  useEffect(() => {
+    if (hasPrefilled.current || closedDays === undefined) return;
+    hasPrefilled.current = true;
+    if (carryForwardPaise > 0) {
+      setOpeningCash(String(toRupees(carryForwardPaise)));
+    }
+  }, [closedDays, carryForwardPaise]);
 
   const handleOpenDay = async () => {
     try {
@@ -40,6 +62,11 @@ export const StartDay: React.FC = () => {
           placeholder="0"
           autoFocus
         />
+        {carryForwardPaise > 0 && (
+          <p className="text-body-s text-tx3 mt-2">
+            Carried from last close · {formatRupees(carryForwardPaise)}
+          </p>
+        )}
       </div>
 
       <div className="w-full max-w-xs mx-auto mt-4">

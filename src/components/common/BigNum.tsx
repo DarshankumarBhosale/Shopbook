@@ -26,7 +26,7 @@ export const BigNum: React.FC<BigNumProps> = ({
         placeholder={placeholder}
         autoFocus={autoFocus}
         style={{ color }}
-        className="w-full text-center font-mono text-[34px] leading-tight font-bold bg-transparent border-none border-b-2 border-line focus:border-line-strong focus:outline-none py-2 tracking-tight"
+        className="w-full text-center font-mono text-[34px] leading-tight font-bold bg-transparent border-b-2 border-line focus:border-line-strong focus:outline-none py-2 tracking-tight"
       />
     </div>
   );
