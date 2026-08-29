@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import { db } from '../../db/schema';
@@ -7,19 +7,32 @@ import { useItemStore } from '../../store/itemStore';
 import { Label } from '../common/Label';
 import { PriceInput } from '../common/PriceInput';
 import { formatRupees } from '../../lib/format';
+import { parsePriceRupees, suggestOnlinePrice } from '../../lib/pricing';
 
 export const MoreTab: React.FC = () => {
   const role = useUIStore((state) => state.role);
   const showToast = useUIStore((state) => state.showToast);
-  const { setCounterPrice, setOnlinePrice, setActive, swapSortOrder } = useItemStore();
+  const { setCounterPrice, setOnlinePrice, setActive, swapSortOrder, addItem, setArchived } =
+    useItemStore();
 
   const items = useLiveQuery(() => db.items.toArray(), []) || [];
 
   const sortedItems = React.useMemo(() => {
-    return [...items].sort((a, b) => (a.sortOrder ?? a.id ?? 0) - (b.sortOrder ?? b.id ?? 0));
+    return [...items]
+      .filter((i) => !i.isArchived)
+      .sort((a, b) => (a.sortOrder ?? a.id ?? 0) - (b.sortOrder ?? b.id ?? 0));
   }, [items]);
 
+  const removedItems = React.useMemo(
+    () => items.filter((i) => i.isArchived).sort((a, b) => a.name.localeCompare(b.name)),
+    [items]
+  );
+
   const activeCount = sortedItems.filter((i) => i.isActive).length;
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [draft, setDraft] = useState({ name: '', category: 'Packaged', price: '', cost: '' });
+  const [isSaving, setIsSaving] = useState(false);
 
   if (role !== 'owner') {
     return (
@@ -56,6 +69,47 @@ export const MoreTab: React.FC = () => {
     }
   };
 
+  const handleAdd = async () => {
+    const counterPaise = parsePriceRupees(draft.price);
+    if (draft.name.trim() === '' || counterPaise === null) return;
+
+    const costPaise = draft.cost.trim() === '' ? undefined : parsePriceRupees(draft.cost);
+    if (draft.cost.trim() !== '' && costPaise === null) {
+      showToast('Cost must be a whole rupee amount');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await addItem({
+        name: draft.name,
+        category: draft.category,
+        counterPaise,
+        onlinePaise: suggestOnlinePrice(counterPaise),
+        costPaise: costPaise ?? undefined,
+        role,
+      });
+      showToast(`${draft.name.trim()} added`);
+      setDraft({ name: '', category: draft.category, price: '', cost: '' });
+      setIsAdding(false);
+    } catch (err) {
+      console.error('Failed to add item:', err);
+      showToast(err instanceof Error ? err.message : 'Could not add that item');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleArchive = async (itemId: number, archived: boolean, name: string) => {
+    try {
+      await setArchived(itemId, archived, role);
+      showToast(archived ? `${name} removed` : `${name} put back`);
+    } catch (err) {
+      console.error('Failed to change item:', err);
+      showToast('Could not change that item');
+    }
+  };
+
   const handleMove = async (index: number, delta: number) => {
     const a = sortedItems[index];
     const b = sortedItems[index + delta];
@@ -79,8 +133,113 @@ export const MoreTab: React.FC = () => {
         </p>
         <p className="text-body-s text-tx3 mt-1 font-mono">
           {activeCount} on the board · {sortedItems.length - activeCount} off
+          {removedItems.length > 0 && ` · ${removedItems.length} removed`}
         </p>
       </div>
+
+      {/* Add a new item */}
+      {isAdding ? (
+        <div className="bg-surface border border-line-strong rounded-md p-4 mb-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-display text-[16px] tracking-[0.04em] uppercase text-tx1">
+              New item
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsAdding(false)}
+              className="tap text-body-s text-tx3 px-2 min-h-[44px]"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <input
+            type="text"
+            value={draft.name}
+            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            placeholder="Name, e.g. Good Day"
+            aria-label="New item name"
+            className="min-h-[44px] rounded-sm px-3 text-body-m bg-base border border-line text-tx1 placeholder:text-tx3 focus:border-line-strong focus:outline-none"
+          />
+
+          <div className="flex flex-wrap gap-2">
+            {['Packaged', 'Breakfast', 'Main Course', 'Beverage'].map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setDraft({ ...draft, category: c })}
+                className="tap min-h-[44px] rounded-full px-3 text-body-s font-semibold border"
+                style={{
+                  backgroundColor:
+                    draft.category === c ? 'var(--color-primary)' : 'var(--color-base)',
+                  borderColor:
+                    draft.category === c ? 'var(--color-primary)' : 'var(--color-line)',
+                  color:
+                    draft.category === c ? 'var(--color-tx-inverse)' : 'var(--color-tx1)',
+                }}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-label text-tx3 uppercase" style={{ letterSpacing: '0.12em' }}>
+                Sell price ₹
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={draft.price}
+                onChange={(e) => setDraft({ ...draft, price: e.target.value.replace(/\D/g, '') })}
+                aria-label="New item sell price"
+                className="min-h-[44px] rounded-sm px-3 font-mono text-body-m bg-base border border-line text-tx1 focus:border-line-strong focus:outline-none"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-label text-tx3 uppercase" style={{ letterSpacing: '0.12em' }}>
+                Cost price ₹
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={draft.cost}
+                onChange={(e) => setDraft({ ...draft, cost: e.target.value.replace(/\D/g, '') })}
+                aria-label="New item cost price"
+                className="min-h-[44px] rounded-sm px-3 font-mono text-body-m bg-base border border-line text-tx1 focus:border-line-strong focus:outline-none"
+              />
+            </label>
+          </div>
+
+          <p className="text-body-s text-tx3">
+            Give a cost price for something you buy ready-made and sell as-is — it
+            gets its own stock line and comes off the shelf on every sale. Leave it
+            blank for something cooked; its recipe has to be set up separately.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={draft.name.trim() === '' || draft.price === '' || isSaving}
+            className="tap min-h-[48px] rounded-md font-display text-[16px] tracking-[0.05em] uppercase disabled:opacity-40"
+            style={{
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--color-tx-on-accent)',
+            }}
+          >
+            {isSaving ? 'Saving…' : 'Add to menu'}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsAdding(true)}
+          className="tap min-h-[48px] mb-4 rounded-md border border-line-strong bg-surface text-body-m font-semibold text-tx1"
+        >
+          + Add an item
+        </button>
+      )}
 
       <div className="flex flex-col gap-2">
         {sortedItems.map((item, index) => (
@@ -157,9 +316,51 @@ export const MoreTab: React.FC = () => {
                 {item.isActive ? 'On' : 'Off'}
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => handleArchive(item.id!, true, item.name)}
+              className="tap self-start min-h-[44px] text-body-s font-semibold"
+              style={{ color: 'var(--color-danger-text)' }}
+            >
+              Remove from menu
+            </button>
           </div>
         ))}
       </div>
+
+      {/* Removed items — kept so past sales still resolve */}
+      {removedItems.length > 0 && (
+        <div className="mt-6">
+          <Label>Removed</Label>
+          <p className="text-body-s text-tx2 mt-1 mb-2">
+            Off the menu, but every sale they appear in is still intact. Put one
+            back any time.
+          </p>
+          <div className="flex flex-col gap-2">
+            {removedItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-surface border border-line rounded-md p-3 flex items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <div className="text-body-m text-tx2 truncate">{item.name}</div>
+                  <div className="text-body-s text-tx3">
+                    {item.category} · {formatRupees(item.sellPriceCounter)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleArchive(item.id!, false, item.name)}
+                  className="tap min-h-[44px] px-3 rounded-sm border border-line-strong bg-base text-body-s font-semibold text-tx1 shrink-0"
+                >
+                  Put back
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

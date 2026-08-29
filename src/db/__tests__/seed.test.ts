@@ -19,7 +19,7 @@ describe('seedDatabaseIfEmpty', () => {
     ]);
 
     expect([firstSeeded, secondSeeded].filter(Boolean)).toHaveLength(1);
-    expect(await db.items.count()).toBe(25);
+    expect(await db.items.count()).toBe(38);
     expect(await db.shops.count()).toBe(1);
   });
 
@@ -28,7 +28,7 @@ describe('seedDatabaseIfEmpty', () => {
     const seededAgain = await seedDatabaseIfEmpty();
 
     expect(seededAgain).toBe(false);
-    expect(await db.items.count()).toBe(25);
+    expect(await db.items.count()).toBe(38);
   });
 
   it('seeds even when a schema upgrade has preserved shops and users', async () => {
@@ -43,8 +43,8 @@ describe('seedDatabaseIfEmpty', () => {
     const seeded = await seedDatabaseIfEmpty();
 
     expect(seeded).toBe(true);
-    expect(await db.items.count()).toBe(25);
-    expect(await db.rawMaterials.count()).toBe(32);
+    expect(await db.items.count()).toBe(38);
+    expect(await db.rawMaterials.count()).toBe(44);
     expect(await db.shops.count()).toBe(1);
     expect((await db.shops.get(1))?.name).toBe('Aaisaheb Snacks Center');
   });
@@ -72,7 +72,7 @@ describe('seedDatabaseIfEmpty', () => {
 
     expect(pavAfterSeed).toBe(160);
     expect(pavAfterUpgrade).toBe(140);
-    expect(await db.items.count()).toBe(25);
+    expect(await db.items.count()).toBe(38);
   });
 
   it('refills a master table an upgrade cleared, even when items survived', async () => {
@@ -86,10 +86,10 @@ describe('seedDatabaseIfEmpty', () => {
     const seeded = await seedDatabaseIfEmpty();
 
     expect(seeded).toBe(true);
-    expect(await db.rawMaterials.count()).toBe(32);
+    expect(await db.rawMaterials.count()).toBe(44);
     expect(await db.customers.count()).toBe(2);
     // Untouched tables are not duplicated.
-    expect(await db.items.count()).toBe(25);
-    expect(await db.recipes.count()).toBe(103);
+    expect(await db.items.count()).toBe(38);
+    expect(await db.recipes.count()).toBe(116);
   });
 });

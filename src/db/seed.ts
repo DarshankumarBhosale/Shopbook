@@ -41,11 +41,28 @@ export const SEED_RAW_MATERIALS: RawMaterial[] = [
   { id: 25, name: 'Dry garlic chutney', unit: 'g', category: 'Oil & spices', avgCost: 12, reorderLevel: 1000 },
   { id: 26, name: 'Spice mix & salt', unit: 'g', category: 'Oil & spices', avgCost: 35, reorderLevel: 1500 },
   { id: 27, name: 'Coriander & green chili', unit: 'g', category: 'Vegetables', avgCost: 10, reorderLevel: 500 },
-  { id: 28, name: 'Maggi noodles', unit: 'pc', category: 'Packaged', avgCost: 1200, reorderLevel: 30 },
+  { id: 28, name: 'Maggi noodles', unit: 'pc', category: 'Packaged', avgCost: 1365, reorderLevel: 30 },
   { id: 29, name: 'Bread slice', unit: 'pc', category: 'Bakery', avgCost: 150, reorderLevel: 100 },
   { id: 30, name: 'Sweet (sheera / gulab jamun)', unit: 'g', category: 'Grocery', avgCost: 20, reorderLevel: 1000 },
   { id: 31, name: 'Soda water', unit: 'g', category: 'Packaged', avgCost: 2, reorderLevel: 5000 },
   { id: 32, name: 'Syrup', unit: 'g', category: 'Packaged', avgCost: 20, reorderLevel: 500 },
+
+  // ── Resale goods ──
+  // Bought as a unit and sold as a unit, so each one is its own material with a
+  // 1:1 recipe. Nothing is cooked, but routing them through the same stock
+  // ledger means they deplete on sale and carry a real cost like everything else.
+  { id: 33, name: 'Chips packet', unit: 'pc', category: 'Resale', avgCost: 455, reorderLevel: 30 },
+  { id: 34, name: 'Chocolate', unit: 'pc', category: 'Resale', avgCost: 91, reorderLevel: 50 },
+  { id: 35, name: 'Cadbury', unit: 'pc', category: 'Resale', avgCost: 910, reorderLevel: 20 },
+  { id: 36, name: 'Cake', unit: 'pc', category: 'Resale', avgCost: 2730, reorderLevel: 10 },
+  { id: 37, name: 'Bourbon', unit: 'pc', category: 'Resale', avgCost: 910, reorderLevel: 20 },
+  { id: 38, name: 'Oreo', unit: 'pc', category: 'Resale', avgCost: 910, reorderLevel: 20 },
+  { id: 39, name: 'Marie Gold', unit: 'pc', category: 'Resale', avgCost: 910, reorderLevel: 20 },
+  { id: 40, name: 'Monaco', unit: 'pc', category: 'Resale', avgCost: 910, reorderLevel: 20 },
+  { id: 41, name: 'Parle-G (large)', unit: 'pc', category: 'Resale', avgCost: 910, reorderLevel: 20 },
+  { id: 42, name: 'Parle-G (small)', unit: 'pc', category: 'Resale', avgCost: 455, reorderLevel: 30 },
+  { id: 43, name: 'Milk packet (500ml)', unit: 'pc', category: 'Dairy', avgCost: 3850, reorderLevel: 20 },
+  { id: 44, name: 'Dahi packet', unit: 'pc', category: 'Dairy', avgCost: 1800, reorderLevel: 15 },
 ];
 
 /**
@@ -88,6 +105,22 @@ export const SEED_ITEMS: Item[] = [
   { id: 25, name: 'Lassi', category: 'Beverage', sellPriceCounter: 3000, sellPriceOnline: 4000, sortOrder: 23, isActive: true },
   { id: 26, name: 'Masala Taak', category: 'Beverage', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 24, isActive: true },
   { id: 27, name: 'Soda', category: 'Beverage', sellPriceCounter: 2000, sellPriceOnline: 3000, sortOrder: 25, isActive: true },
+
+  // ── Packaged goods sold as they come in ──
+  // Thin margins by nature: 9% on biscuits, chips and confectionery.
+  { id: 28, name: 'Chips packet', category: 'Packaged', sellPriceCounter: 500, sellPriceOnline: 1000, sortOrder: 26, isActive: true },
+  { id: 29, name: 'Chocolate', category: 'Packaged', sellPriceCounter: 100, sellPriceOnline: 500, sortOrder: 27, isActive: true },
+  { id: 30, name: 'Cadbury', category: 'Packaged', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 28, isActive: true },
+  { id: 31, name: 'Cake', category: 'Packaged', sellPriceCounter: 3000, sellPriceOnline: 4000, sortOrder: 29, isActive: true },
+  { id: 32, name: 'Maggi packet', category: 'Packaged', sellPriceCounter: 1500, sellPriceOnline: 2000, sortOrder: 30, isActive: true },
+  { id: 33, name: 'Bourbon', category: 'Packaged', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 31, isActive: true },
+  { id: 34, name: 'Oreo', category: 'Packaged', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 32, isActive: true },
+  { id: 35, name: 'Marie Gold', category: 'Packaged', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 33, isActive: true },
+  { id: 36, name: 'Monaco', category: 'Packaged', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 34, isActive: true },
+  { id: 37, name: 'Parle-G (large)', category: 'Packaged', sellPriceCounter: 1000, sellPriceOnline: 1500, sortOrder: 35, isActive: true },
+  { id: 38, name: 'Parle-G (small)', category: 'Packaged', sellPriceCounter: 500, sellPriceOnline: 1000, sortOrder: 36, isActive: true },
+  { id: 39, name: 'Milk packet (500ml)', category: 'Packaged', sellPriceCounter: 3900, sellPriceOnline: 5000, sortOrder: 37, isActive: true },
+  { id: 40, name: 'Dahi packet', category: 'Packaged', sellPriceCounter: 2000, sellPriceOnline: 3000, sortOrder: 38, isActive: true },
 ];
 
 /**
@@ -257,6 +290,23 @@ export const SEED_RECIPES: Omit<Recipe, 'id'>[] = [
   // Soda — soda water 200, syrup 10
   { itemId: 27, rawMaterialId: 31, qtyPerUnit: 200 },
   { itemId: 27, rawMaterialId: 32, qtyPerUnit: 10 },
+
+  // ── Resale goods: one item, one packet off the shelf ──
+  { itemId: 28, rawMaterialId: 33, qtyPerUnit: 1 }, // Chips packet
+  { itemId: 29, rawMaterialId: 34, qtyPerUnit: 1 }, // Chocolate
+  { itemId: 30, rawMaterialId: 35, qtyPerUnit: 1 }, // Cadbury
+  { itemId: 31, rawMaterialId: 36, qtyPerUnit: 1 }, // Cake
+  // The Maggi packet sold as-is comes off the same shelf as the one that gets
+  // cooked into Plain Maggie, so both draw on raw material 28.
+  { itemId: 32, rawMaterialId: 28, qtyPerUnit: 1 }, // Maggi packet
+  { itemId: 33, rawMaterialId: 37, qtyPerUnit: 1 }, // Bourbon
+  { itemId: 34, rawMaterialId: 38, qtyPerUnit: 1 }, // Oreo
+  { itemId: 35, rawMaterialId: 39, qtyPerUnit: 1 }, // Marie Gold
+  { itemId: 36, rawMaterialId: 40, qtyPerUnit: 1 }, // Monaco
+  { itemId: 37, rawMaterialId: 41, qtyPerUnit: 1 }, // Parle-G (large)
+  { itemId: 38, rawMaterialId: 42, qtyPerUnit: 1 }, // Parle-G (small)
+  { itemId: 39, rawMaterialId: 43, qtyPerUnit: 1 }, // Milk packet (500ml)
+  { itemId: 40, rawMaterialId: 44, qtyPerUnit: 1 }, // Dahi packet
 ];
 
 /**

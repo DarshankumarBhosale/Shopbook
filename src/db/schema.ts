@@ -109,6 +109,17 @@ export class ShopBookDB extends Dexie {
         tx.table('rawMaterials').clear(),
       ]);
     });
+
+    // v6 adds the resale goods — biscuits, chips, confectionery, milk and dahi
+    // packets — and the archive flag that lets an item be removed from the shop
+    // without erasing the sales it appears in.
+    this.version(6).stores({}).upgrade(async (tx) => {
+      await Promise.all([
+        tx.table('items').clear(),
+        tx.table('recipes').clear(),
+        tx.table('rawMaterials').clear(),
+      ]);
+    });
   }
 }
 

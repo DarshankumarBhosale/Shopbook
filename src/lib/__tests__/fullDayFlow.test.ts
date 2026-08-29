@@ -24,8 +24,8 @@ describe('Phase 1 Full Day Operational Flow', () => {
     const itemsCount = await db.items.count();
     const recipesCount = await db.recipes.count();
 
-    expect(rawMaterialsCount).toBe(32);
-    expect(itemsCount).toBe(25);
+    expect(rawMaterialsCount).toBe(44);
+    expect(itemsCount).toBe(38);
     expect(recipesCount).toBeGreaterThan(100);
 
     // Initial stock for Pav (rmId: 1, reorder: 100 * 1.6 = 160)

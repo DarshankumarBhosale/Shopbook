@@ -28,11 +28,11 @@ export const SellTab: React.FC = () => {
 
   const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
   const recipes = useLiveQuery(() => db.recipes.toArray(), []) || [];
-  const rawMaterials = useLiveQuery(() => db.rawMaterials.toArray(), []) || [];
+  const rawMaterials = useLiveQuery(() => db.rawMaterials.filter((r) => !r.isArchived).toArray(), []) || [];
   const stockMoves = useLiveQuery(() => db.stockMoves.toArray(), []) || [];
 
   // Reactive queries from Dexie
-  const items = useLiveQuery(() => db.items.filter((i) => i.isActive).toArray(), []) || [];
+  const items = useLiveQuery(() => db.items.filter((i) => i.isActive && !i.isArchived).toArray(), []) || [];
   const daySales = useLiveQuery(
     () => (openDay?.id ? db.sales.where('dayId').equals(openDay.id).toArray() : []),
     [openDay?.id]

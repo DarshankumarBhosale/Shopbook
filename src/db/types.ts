@@ -42,7 +42,13 @@ export interface Item {
   sellPriceCounter: number; // paise
   sellPriceOnline: number; // paise
   sortOrder: number;
+  /** Off the Sell board, but still in the menu list and one tap from returning. */
   isActive: boolean;
+  /**
+   * Removed from the shop's menu. Hidden everywhere a live item would appear,
+   * but the row stays so past sales still resolve to a real name and price.
+   */
+  isArchived?: boolean;
 }
 
 export interface RawMaterial {
@@ -55,6 +61,8 @@ export interface RawMaterial {
   avgCost: number;
   /** Do NOT add currentQty here — stock is computed from stockMoves. */
   reorderLevel: number; // in base unit qty (not paise)
+  /** Removed from the kitchen list; its stock ledger is kept. */
+  isArchived?: boolean;
 }
 
 export interface Recipe {

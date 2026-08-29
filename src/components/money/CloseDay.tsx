@@ -57,7 +57,7 @@ export const CloseDay: React.FC = () => {
 
   // Closing stock value and today's wastage, for the day summary.
   const allStockMoves = useLiveQuery(() => db.stockMoves.toArray(), []) || [];
-  const rawMaterials = useLiveQuery(() => db.rawMaterials.toArray(), []) || [];
+  const rawMaterials = useLiveQuery(() => db.rawMaterials.filter((r) => !r.isArchived).toArray(), []) || [];
 
   const stockMap = computeAllStock(allStockMoves, rawMaterials);
   const closingStockValuePaise = rawMaterials.reduce(

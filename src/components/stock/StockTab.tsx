@@ -8,15 +8,26 @@ import { computeAllStock, computeLowStock } from '../../lib/stockMoves';
 import { Label } from '../common/Label';
 import { formatRupees, formatUnitRate } from '../../lib/format';
 
-type Sheet = 'in' | 'waste' | 'audit' | null;
+type Sheet = 'in' | 'waste' | 'audit' | 'new' | null;
 
 export const StockTab: React.FC = () => {
   const openDay = useDayStore((state) => state.openDay);
   const showToast = useUIStore((state) => state.showToast);
-  const { recordStockIn, recordWastage, recordAudit } = useStockStore();
+  const { recordStockIn, recordWastage, recordAudit, addRawMaterial, setRawMaterialArchived } =
+    useStockStore();
 
-  const rawMaterials = useLiveQuery(() => db.rawMaterials.toArray(), []) || [];
+  const allMaterials = useLiveQuery(() => db.rawMaterials.toArray(), []) || [];
+  const rawMaterials = React.useMemo(
+    () => allMaterials.filter((r) => !r.isArchived),
+    [allMaterials]
+  );
+  const removedMaterials = React.useMemo(
+    () => allMaterials.filter((r) => r.isArchived).sort((a, b) => a.name.localeCompare(b.name)),
+    [allMaterials]
+  );
   const stockMoves = useLiveQuery(() => db.stockMoves.toArray(), []) || [];
+
+  const [newRm, setNewRm] = useState({ name: '', unit: 'pc', category: 'Resale', cost: '', reorder: '' });
 
   const stockMap = React.useMemo(
     () => computeAllStock(stockMoves, rawMaterials),
@@ -97,8 +108,48 @@ export const StockTab: React.FC = () => {
     }
   };
 
+  const handleAddMaterial = async () => {
+    const cost = Math.round(Number(newRm.cost || 0) * 100);
+    if (newRm.name.trim() === '' || !Number.isFinite(cost) || cost < 0) return;
+
+    try {
+      setIsSubmitting(true);
+      await addRawMaterial({
+        name: newRm.name,
+        unit: newRm.unit,
+        category: newRm.category,
+        costPaise: cost,
+        reorderLevel: Number(newRm.reorder || 0),
+      });
+      showToast(`${newRm.name.trim()} added to the kitchen`);
+      setNewRm({ name: '', unit: 'pc', category: 'Resale', cost: '', reorder: '' });
+      setSheet(null);
+    } catch (err) {
+      console.error('Failed to add material:', err);
+      showToast(err instanceof Error ? err.message : 'Could not add that material');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleArchiveMaterial = async (id: number, archived: boolean, name: string) => {
+    try {
+      await setRawMaterialArchived(id, archived);
+      showToast(archived ? `${name} removed` : `${name} put back`);
+    } catch (err) {
+      console.error('Failed to change material:', err);
+      showToast('Could not change that material');
+    }
+  };
+
   const sheetTitle =
-    sheet === 'in' ? 'Stock in' : sheet === 'waste' ? 'Log wastage' : 'Physical count';
+    sheet === 'in'
+      ? 'Stock in'
+      : sheet === 'waste'
+        ? 'Log wastage'
+        : sheet === 'new'
+          ? 'New material'
+          : 'Physical count';
 
   return (
     <div className="flex-1 flex flex-col px-4 pt-3 pb-[100px] overflow-y-auto noscroll">
@@ -109,6 +160,7 @@ export const StockTab: React.FC = () => {
             ['in', 'Stock in'],
             ['waste', 'Wastage'],
             ['audit', 'Count'],
+            ['new', '+ New'],
           ] as [Sheet, string][]
         ).map(([id, label]) => (
           <button
@@ -154,6 +206,88 @@ export const StockTab: React.FC = () => {
             </button>
           </div>
 
+          {sheet === 'new' ? (
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={newRm.name}
+                onChange={(e) => setNewRm({ ...newRm, name: e.target.value })}
+                placeholder="Name, e.g. Good Day biscuit"
+                aria-label="New material name"
+                className="min-h-[44px] rounded-md px-3.5 text-body-m bg-base border border-line text-tx1 placeholder:text-tx3 focus:border-line-strong focus:outline-none"
+              />
+
+              <div className="grid grid-cols-3 gap-2">
+                <label className="flex flex-col gap-1">
+                  <span className="text-label text-tx3 uppercase" style={{ letterSpacing: '0.12em' }}>Unit</span>
+                  <select
+                    value={newRm.unit}
+                    onChange={(e) => setNewRm({ ...newRm, unit: e.target.value })}
+                    aria-label="New material unit"
+                    className="min-h-[44px] rounded-md px-2 text-body-m bg-base border border-line text-tx1 focus:outline-none"
+                  >
+                    <option value="pc">pc</option>
+                    <option value="g">g</option>
+                    <option value="ml">ml</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-label text-tx3 uppercase" style={{ letterSpacing: '0.12em' }}>Cost ₹/unit</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={newRm.cost}
+                    onChange={(e) => setNewRm({ ...newRm, cost: e.target.value.replace(/[^\d.]/g, '') })}
+                    aria-label="New material cost"
+                    className="min-h-[44px] rounded-md px-2 font-mono text-body-m bg-base border border-line text-tx1 focus:outline-none"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-label text-tx3 uppercase" style={{ letterSpacing: '0.12em' }}>Reorder at</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={newRm.reorder}
+                    onChange={(e) => setNewRm({ ...newRm, reorder: e.target.value.replace(/\D/g, '') })}
+                    aria-label="New material reorder level"
+                    className="min-h-[44px] rounded-md px-2 font-mono text-body-m bg-base border border-line text-tx1 focus:outline-none"
+                  />
+                </label>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {['Resale', 'Bakery', 'Dairy', 'Grocery', 'Vegetables', 'Packaged'].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setNewRm({ ...newRm, category: c })}
+                    className="tap min-h-[44px] rounded-full px-3 text-body-s font-semibold border"
+                    style={{
+                      backgroundColor: newRm.category === c ? 'var(--color-primary)' : 'var(--color-base)',
+                      borderColor: newRm.category === c ? 'var(--color-primary)' : 'var(--color-line)',
+                      color: newRm.category === c ? 'var(--color-tx-inverse)' : 'var(--color-tx1)',
+                    }}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddMaterial}
+                disabled={newRm.name.trim() === '' || newRm.cost === '' || isSubmitting}
+                className="tap min-h-[48px] rounded-md font-display text-[16px] tracking-[0.05em] uppercase disabled:opacity-40"
+                style={{
+                  backgroundColor: 'var(--color-accent)',
+                  color: 'var(--color-tx-on-accent)',
+                }}
+              >
+                {isSubmitting ? 'Saving…' : 'Add material'}
+              </button>
+            </div>
+          ) : (
+          <>
           <select
             value={rmId}
             onChange={(e) => setRmId(e.target.value)}
@@ -220,6 +354,8 @@ export const StockTab: React.FC = () => {
           >
             {isSubmitting ? 'SAVING...' : 'SAVE'}
           </button>
+          </>
+          )}
         </div>
       )}
 
@@ -250,12 +386,22 @@ export const StockTab: React.FC = () => {
                         {formatUnitRate(rm.avgCost, rm.unit)}
                       </div>
                     </div>
-                    <div
-                      className="font-mono text-mono-m font-bold"
-                      style={{ color: low ? 'var(--color-danger-text)' : 'var(--color-tx1)' }}
-                    >
-                      {Math.round(have)}
-                      <span className="text-body-s text-tx3"> {rm.unit}</span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div
+                        className="font-mono text-mono-m font-bold"
+                        style={{ color: low ? 'var(--color-danger-text)' : 'var(--color-tx1)' }}
+                      >
+                        {Math.round(have)}
+                        <span className="text-body-s text-tx3"> {rm.unit}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleArchiveMaterial(rm.id!, true, rm.name)}
+                        aria-label={`Remove ${rm.name}`}
+                        className="tap w-11 h-11 rounded-sm border border-line bg-base text-tx3 text-[18px] leading-none"
+                      >
+                        ×
+                      </button>
                     </div>
                   </div>
                 );
@@ -264,6 +410,39 @@ export const StockTab: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Removed materials — their stock ledger is kept */}
+      {removedMaterials.length > 0 && (
+        <div className="mt-6">
+          <Label>Removed</Label>
+          <p className="text-body-s text-tx2 mt-1 mb-2">
+            Off the kitchen list. Their stock history is kept, so old counts and
+            sales still add up.
+          </p>
+          <div className="flex flex-col gap-2">
+            {removedMaterials.map((rm) => (
+              <div
+                key={rm.id}
+                className="bg-surface border border-line rounded-md p-3 flex items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <div className="text-body-m text-tx2 truncate">{rm.name}</div>
+                  <div className="text-body-s text-tx3">
+                    {rm.category} · {formatUnitRate(rm.avgCost, rm.unit)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleArchiveMaterial(rm.id!, false, rm.name)}
+                  className="tap min-h-[44px] px-3 rounded-sm border border-line-strong bg-base text-body-s font-semibold text-tx1 shrink-0"
+                >
+                  Put back
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
