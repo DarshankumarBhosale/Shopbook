@@ -28,8 +28,8 @@ export const ItemTile: React.FC<ItemTileProps> = ({
       className="tap relative flex flex-col justify-between p-2 rounded-md transition-all text-left border"
       style={{
         minHeight: '78px',
-        backgroundColor: isSelected ? 'var(--color-marigold)' : 'var(--color-surface)',
-        borderColor: isSelected ? 'var(--color-marigold)' : 'var(--color-line)',
+        backgroundColor: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+        borderColor: isSelected ? 'var(--color-primary)' : 'var(--color-line)',
         color: isSelected ? 'var(--color-base)' : 'var(--color-tx1)',
         opacity: disabled ? 0.38 : 1,
       }}
@@ -40,7 +40,7 @@ export const ItemTile: React.FC<ItemTileProps> = ({
       <span
         className="font-mono text-mono-m mt-1"
         style={{
-          color: isSelected ? 'var(--color-base)' : 'var(--color-marigold)',
+          color: isSelected ? 'var(--color-base)' : 'var(--color-primary)',
         }}
       >
         {formatRupees(pricePaise)}

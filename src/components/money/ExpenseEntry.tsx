@@ -86,8 +86,8 @@ export const ExpenseEntry: React.FC = () => {
                 onClick={() => setSelectedCat(cat)}
                 className="tap rounded-full px-3 py-1.5 text-body-s font-semibold border transition-colors"
                 style={{
-                  backgroundColor: isSelected ? 'var(--color-marigold)' : 'var(--color-surface)',
-                  borderColor: isSelected ? 'var(--color-marigold)' : 'var(--color-line)',
+                  backgroundColor: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+                  borderColor: isSelected ? 'var(--color-primary)' : 'var(--color-line)',
                   color: isSelected ? 'var(--color-tx-inverse)' : 'var(--color-tx1)',
                 }}
               >
@@ -115,8 +115,8 @@ export const ExpenseEntry: React.FC = () => {
               onClick={() => setPaymentMode(m)}
               className="tap py-3 rounded-md font-display text-[16px] tracking-[0.05em] uppercase border transition-colors"
               style={{
-                backgroundColor: isSelected ? 'var(--color-marigold)' : 'var(--color-surface)',
-                borderColor: isSelected ? 'var(--color-marigold)' : 'var(--color-line)',
+                backgroundColor: isSelected ? 'var(--color-primary)' : 'var(--color-surface)',
+                borderColor: isSelected ? 'var(--color-primary)' : 'var(--color-line)',
                 color: isSelected ? 'var(--color-tx-inverse)' : 'var(--color-tx1)',
               }}
             >
@@ -144,9 +144,9 @@ export const ExpenseEntry: React.FC = () => {
         disabled={!amount || Number(amount) <= 0 || isSubmitting}
         className="tap w-full h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed mb-6"
         style={{
-          backgroundColor: amount ? 'var(--color-marigold)' : 'var(--color-surface)',
-          color: amount ? 'var(--color-tx-inverse)' : 'var(--color-tx3)',
-          border: `1px solid ${amount ? 'var(--color-marigold)' : 'var(--color-line)'}`,
+          backgroundColor: amount ? 'var(--color-accent)' : 'var(--color-surface)',
+          color: amount ? 'var(--color-tx-on-accent)' : 'var(--color-tx3)',
+          border: `1px solid ${amount ? 'var(--color-accent)' : 'var(--color-line)'}`,
         }}
       >
         {isSubmitting ? 'SAVING...' : 'SAVE EXPENSE'}

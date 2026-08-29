@@ -19,9 +19,9 @@ export const StatCard: React.FC<StatCardProps> = ({
       case 'good':
         return 'var(--color-success)';
       case 'bad':
-        return 'var(--color-danger)';
+        return 'var(--color-danger-text)';
       case 'brand':
-        return 'var(--color-marigold)';
+        return 'var(--color-accent-text)';
       default:
         return 'var(--color-tx1)';
     }

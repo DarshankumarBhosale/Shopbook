@@ -92,7 +92,7 @@ export const OrdersView: React.FC = () => {
                     <span
                       className="font-mono text-mono-m font-bold"
                       style={{
-                        color: isReversed ? 'var(--color-tx3)' : 'var(--color-marigold)',
+                        color: isReversed ? 'var(--color-tx3)' : 'var(--color-accent-text)',
                         textDecoration: isReversed ? 'line-through' : 'none',
                       }}
                     >
@@ -129,8 +129,8 @@ export const OrdersView: React.FC = () => {
                       disabled={reason.trim() === '' || isSubmitting}
                       className="tap min-h-[44px] px-4 rounded-sm font-display text-[15px] tracking-[0.05em] uppercase disabled:opacity-40"
                       style={{
-                        backgroundColor: 'var(--color-danger)',
-                        color: 'var(--color-tx1)',
+                        backgroundColor: 'var(--color-danger-text)',
+                        color: 'var(--color-tx-inverse)',
                       }}
                     >
                       {isSubmitting ? '...' : 'Reverse'}

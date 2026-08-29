@@ -117,8 +117,8 @@ export const StockTab: React.FC = () => {
             onClick={() => openSheet(id)}
             className="tap flex-1 py-2.5 rounded-md text-[13px] font-bold border transition-colors"
             style={{
-              backgroundColor: sheet === id ? 'var(--color-marigold)' : 'var(--color-surface)',
-              borderColor: sheet === id ? 'var(--color-marigold)' : 'var(--color-line)',
+              backgroundColor: sheet === id ? 'var(--color-primary)' : 'var(--color-surface)',
+              borderColor: sheet === id ? 'var(--color-primary)' : 'var(--color-line)',
               color: sheet === id ? 'var(--color-tx-inverse)' : 'var(--color-tx2)',
             }}
           >
@@ -214,8 +214,8 @@ export const StockTab: React.FC = () => {
             disabled={!rmId || !qty || isSubmitting}
             className="tap w-full h-[48px] rounded-md font-display text-[16px] tracking-[0.05em] uppercase flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: 'var(--color-marigold)',
-              color: 'var(--color-tx-inverse)',
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--color-tx-on-accent)',
             }}
           >
             {isSubmitting ? 'SAVING...' : 'SAVE'}
@@ -252,7 +252,7 @@ export const StockTab: React.FC = () => {
                     </div>
                     <div
                       className="font-mono text-mono-m font-bold"
-                      style={{ color: low ? 'var(--color-danger)' : 'var(--color-tx1)' }}
+                      style={{ color: low ? 'var(--color-danger-text)' : 'var(--color-tx1)' }}
                     >
                       {Math.round(have)}
                       <span className="text-body-s text-tx3"> {rm.unit}</span>

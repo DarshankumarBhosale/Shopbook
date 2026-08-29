@@ -13,7 +13,7 @@ export const RoleSelect: React.FC = () => {
       <div className="mb-2">
         <h1 className="font-display text-[48px] leading-[0.95] tracking-[0.02em] uppercase text-tx1">
           SHOP<br />
-          <span style={{ color: 'var(--color-marigold)' }}>BOOK</span>
+          <span style={{ color: 'var(--color-primary)' }}>BOOK</span>
         </h1>
       </div>
 
@@ -27,7 +27,7 @@ export const RoleSelect: React.FC = () => {
           onClick={() => handleSelectRole('owner')}
           className="tap w-full h-[52px] rounded-md font-display text-[20px] tracking-[0.06em] uppercase flex items-center justify-center transition-transform active:scale-[0.97]"
           style={{
-            backgroundColor: 'var(--color-marigold)',
+            backgroundColor: 'var(--color-primary)',
             color: 'var(--color-tx-inverse)',
           }}
         >

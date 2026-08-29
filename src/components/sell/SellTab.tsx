@@ -169,7 +169,7 @@ export const SellTab: React.FC = () => {
       <section className="px-4 py-2 border-b border-line bg-surface/30 select-none flex items-center justify-between shrink-0 h-[48px]">
         <div className="flex items-baseline gap-2">
           <Label className="mb-0">Sales</Label>
-          <span className="font-mono text-mono-l font-bold text-marigold">
+          <span className="font-mono text-mono-l font-bold text-accent-text">
             {formatRupees(salesSummary.gross)}
           </span>
         </div>
@@ -243,7 +243,7 @@ export const SellTab: React.FC = () => {
             </div>
 
             {/* Running total */}
-            <div className="font-mono text-[28px] font-bold text-marigold shrink-0">
+            <div className="font-mono text-[28px] font-bold text-accent-text shrink-0">
               {formatRupeesRaw(cartGross / 100)}
             </div>
           </div>
@@ -251,7 +251,7 @@ export const SellTab: React.FC = () => {
           {/* Not enough on the shelf for what is in the cart */}
           {shortages.length > 0 && (
             <div className="mb-3 rounded-sm border border-danger px-3 py-2">
-              <span className="text-body-s" style={{ color: 'var(--color-danger)' }}>
+              <span className="text-body-s" style={{ color: 'var(--color-danger-text)' }}>
                 Short on {shortages.slice(0, 3).map((s) => s.name).join(', ')}
                 {shortages.length > 3 && ` +${shortages.length - 3}`} — this sale
                 takes stock below zero
@@ -304,8 +304,8 @@ export const SellTab: React.FC = () => {
                   disabled={newCustomerName.trim() === ''}
                   className="tap min-h-[44px] px-4 rounded-sm font-display text-[15px] tracking-[0.05em] uppercase disabled:opacity-40"
                   style={{
-                    backgroundColor: 'var(--color-marigold)',
-                    color: 'var(--color-tx-inverse)',
+                    backgroundColor: 'var(--color-accent)',
+                    color: 'var(--color-tx-on-accent)',
                   }}
                 >
                   Add
@@ -320,8 +320,8 @@ export const SellTab: React.FC = () => {
                 onClick={() => handlePayment('Cash')}
                 className="tap h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center transition-transform active:scale-[0.97]"
                 style={{
-                  backgroundColor: 'var(--color-marigold)',
-                  color: 'var(--color-tx-inverse)',
+                  backgroundColor: 'var(--color-accent)',
+                  color: 'var(--color-tx-on-accent)',
                 }}
               >
                 CASH

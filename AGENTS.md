@@ -65,16 +65,21 @@ Full spec in `docs/design-system.md`. The essentials, as Tailwind theme extensio
 
 ```js
 colors: {
-  base:'#0A1A14', surface:'#12291F', raised:'#1A3A2C',
-  line:'#1F4534', lineStrong:'#2D6349',
-  tx1:'#F5F2E8', tx2:'#9CB0A5', tx3:'#66817A',
-  marigold:'#F5A623', marigoldPress:'#D68F17',
-  success:'#3FBF7F', danger:'#E04B36', platform:'#A970C9',
+  base:'#F9FAFB', surface:'#FFFFFF', raised:'#F3F4F6',
+  line:'#E5E7EB', lineStrong:'#CBD5E1',
+  tx1:'#111827', tx2:'#4B5563', tx3:'#6B7280',
+  txInverse:'#FFFFFF', txOnAccent:'#06281F',
+  primary:'#1E3A8A', primaryPress:'#172E6B',
+  accent:'#10B981', accentText:'#047857', accentPress:'#0E9F6E',
+  success:'#047857', danger:'#EF4444', dangerText:'#DC2626',
 }
 ```
 
-- **Marigold is only ever a primary action or a rupee value.** Never a heading, never a border, never decoration. This rule gets broken first — watch for it.
-- **Red only where the owner must act** — shortfall, low stock, wastage.
+- **Navy is anything you press** — headers, nav, primary buttons, the selected state of a tile or chip. Never body text, never a decorative rule.
+- **Mint is money coming in** — sales figures, profit, and the Save/Checkout button that commits a transaction. Never a heading, never decoration, and never on a negative number: a loss shown in mint reads as a gain.
+- **Mint is too light to carry small text on this ground** (~2.4:1). `accent` fills shapes; `accentText` (#047857) is what rupee figures use. Same split for coral: `danger` fills, `dangerText` writes.
+- **Text on mint is `txOnAccent`, not white** — white on mint is 2.4:1 and unreadable in sunlight.
+- **Coral only where the owner must act** — shortfall, low stock, wastage, returns and reversals.
 - Anton uppercase for screen titles, tile names, button labels, panel headers. Inter for body. JetBrains Mono with `tabular-nums` for **every** number.
 - 4pt grid. Approved spacing: 4, 8, 12, 16, 24, 32. Nothing else.
 - Radius: 6 inputs/chips · 10 cards/tiles/buttons · 14 sheets · full for pills.

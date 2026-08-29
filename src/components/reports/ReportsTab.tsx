@@ -33,15 +33,26 @@ const Panel: React.FC<{ title: string; children: React.ReactNode }> = ({ title, 
   </div>
 );
 
-const Row: React.FC<{ label: string; value: string; strong?: boolean }> = ({
-  label,
-  value,
-  strong,
-}) => (
+const Row: React.FC<{
+  label: string;
+  value: string;
+  strong?: boolean;
+  /** Mint is reserved for money coming in; a loss must not read as a gain. */
+  negative?: boolean;
+}> = ({ label, value, strong, negative }) => (
   <div className="flex items-baseline justify-between py-1 text-body-m">
     <span className={strong ? 'font-semibold text-tx1' : 'text-tx2'}>{label}</span>
     <span
-      className={`font-mono ${strong ? 'text-mono-l font-bold text-marigold' : 'text-tx1 font-medium'}`}
+      className={`font-mono ${strong ? 'text-mono-l font-bold' : 'text-tx1 font-medium'}`}
+      style={
+        strong
+          ? {
+              color: negative
+                ? 'var(--color-danger-text)'
+                : 'var(--color-accent-text)',
+            }
+          : undefined
+      }
     >
       {value}
     </span>
@@ -109,7 +120,7 @@ export const ReportsTab: React.FC = () => {
         <StatCard
           label="Margin"
           value={`${pnl.marginPct.toFixed(1)}%`}
-          tone={pnl.marginPct >= 20 ? 'good' : 'brand'}
+          tone={pnl.marginPct < 0 ? 'bad' : pnl.marginPct >= 20 ? 'good' : 'brand'}
         />
         <StatCard label="Wastage" value={formatRupees(wastageValuePaise)} tone="bad" />
       </div>
@@ -131,7 +142,7 @@ export const ReportsTab: React.FC = () => {
                 type="monotone"
                 dataKey="sales"
                 name="Sales"
-                stroke="var(--color-marigold)"
+                stroke="var(--color-primary)"
                 strokeWidth={2.5}
                 dot={false}
               />
@@ -165,7 +176,7 @@ export const ReportsTab: React.FC = () => {
                 contentStyle={tooltipStyle}
                 formatter={(value) => `₹${Math.round(Number(value)).toLocaleString('en-IN')}`}
               />
-              <Bar dataKey="amount" fill="var(--color-marigold)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="amount" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Panel>
@@ -178,7 +189,12 @@ export const ReportsTab: React.FC = () => {
         <Row label="Cost of ingredients" value={`− ${formatRupees(pnl.cogsPaise)}`} />
         <Row label="Expenses" value={`− ${formatRupees(pnl.expensesPaise)}`} />
         <div className="border-t border-line mt-2 pt-2">
-          <Row label="Net profit" value={formatRupees(pnl.netProfitPaise)} strong />
+          <Row
+            label="Net profit"
+            value={formatRupees(pnl.netProfitPaise)}
+            strong
+            negative={pnl.netProfitPaise < 0}
+          />
         </div>
       </Panel>
 
@@ -195,7 +211,7 @@ export const ReportsTab: React.FC = () => {
                   {formatRupees(d.grossSales ?? 0)}
                 </span>
                 {d.variance !== 0 && (
-                  <span className="font-mono text-body-m" style={{ color: 'var(--color-danger)' }}>
+                  <span className="font-mono text-body-m" style={{ color: 'var(--color-danger-text)' }}>
                     {d.variance > 0 ? '+' : '−'}
                     {formatRupees(Math.abs(d.variance))}
                   </span>

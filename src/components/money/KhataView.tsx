@@ -64,7 +64,7 @@ export const KhataView: React.FC = () => {
         <div
           className="font-mono text-[32px] leading-tight font-bold"
           style={{
-            color: totalOutstanding > 0 ? 'var(--color-danger)' : 'var(--color-success)',
+            color: totalOutstanding > 0 ? 'var(--color-danger-text)' : 'var(--color-success)',
           }}
         >
           {formatRupees(totalOutstanding)}
@@ -97,7 +97,7 @@ export const KhataView: React.FC = () => {
                   style={{
                     color:
                       b.outstandingPaise > 0
-                        ? 'var(--color-danger)'
+                        ? 'var(--color-danger-text)'
                         : 'var(--color-tx3)',
                   }}
                 >
@@ -135,8 +135,8 @@ export const KhataView: React.FC = () => {
                     disabled={amount === '' || Number(amount) <= 0 || isSubmitting}
                     className="tap min-h-[44px] px-4 rounded-sm font-display text-[15px] tracking-[0.05em] uppercase disabled:opacity-40"
                     style={{
-                      backgroundColor: 'var(--color-marigold)',
-                      color: 'var(--color-tx-inverse)',
+                      backgroundColor: 'var(--color-accent)',
+                      color: 'var(--color-tx-on-accent)',
                     }}
                   >
                     {isSubmitting ? '...' : 'Save'}
@@ -152,9 +152,9 @@ export const KhataView: React.FC = () => {
                       className="tap min-h-[44px] rounded-sm border text-body-m font-semibold"
                       style={{
                         backgroundColor:
-                          mode === m ? 'var(--color-marigold)' : 'var(--color-base)',
+                          mode === m ? 'var(--color-primary)' : 'var(--color-base)',
                         borderColor:
-                          mode === m ? 'var(--color-marigold)' : 'var(--color-line)',
+                          mode === m ? 'var(--color-primary)' : 'var(--color-line)',
                         color:
                           mode === m ? 'var(--color-tx-inverse)' : 'var(--color-tx1)',
                       }}

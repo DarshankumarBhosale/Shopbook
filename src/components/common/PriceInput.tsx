@@ -73,7 +73,7 @@ export const PriceInput: React.FC<PriceInputProps> = ({
               e.currentTarget.blur();
             }
           }}
-          className="w-full min-h-[44px] bg-transparent font-mono text-mono-m text-marigold focus:outline-none"
+          className="w-full min-h-[44px] bg-transparent font-mono text-mono-m text-tx1 focus:outline-none"
         />
       </span>
     </label>

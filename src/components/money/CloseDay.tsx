@@ -150,7 +150,7 @@ export const CloseDay: React.FC = () => {
 
         <div className="border-t border-line mt-2 pt-2 flex items-baseline justify-between">
           <span className="text-body-m font-semibold text-tx1">Drawer should hold</span>
-          <span className="font-mono text-mono-l font-bold text-marigold">
+          <span className="font-mono text-mono-l font-bold text-accent-text">
             {formatRupees(expectedCashPaise)}
           </span>
         </div>
@@ -181,7 +181,7 @@ export const CloseDay: React.FC = () => {
         {wastageValuePaise > 0 && (
           <div className="flex items-baseline justify-between py-1 text-body-m">
             <span className="text-tx2">Wastage</span>
-            <span className="font-mono font-medium" style={{ color: 'var(--color-danger)' }}>
+            <span className="font-mono font-medium" style={{ color: 'var(--color-danger-text)' }}>
               {formatRupees(wastageValuePaise)}
             </span>
           </div>
@@ -192,7 +192,7 @@ export const CloseDay: React.FC = () => {
           <span
             className="font-mono text-mono-l font-bold"
             style={{
-              color: profitPaise >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
+              color: profitPaise >= 0 ? 'var(--color-success)' : 'var(--color-danger-text)',
             }}
           >
             {formatRupees(profitPaise)}
@@ -274,9 +274,9 @@ export const CloseDay: React.FC = () => {
         disabled={!isValid || isSubmitting}
         className="tap w-full h-[52px] rounded-md font-display text-[19px] tracking-[0.06em] uppercase flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed mt-4 mb-6"
         style={{
-          backgroundColor: isValid ? 'var(--color-marigold)' : 'var(--color-surface)',
-          color: isValid ? 'var(--color-tx-inverse)' : 'var(--color-tx3)',
-          border: `1px solid ${isValid ? 'var(--color-marigold)' : 'var(--color-line)'}`,
+          backgroundColor: isValid ? 'var(--color-accent)' : 'var(--color-surface)',
+          color: isValid ? 'var(--color-tx-on-accent)' : 'var(--color-tx3)',
+          border: `1px solid ${isValid ? 'var(--color-accent)' : 'var(--color-line)'}`,
         }}
       >
         {isSubmitting ? 'LOCKING...' : 'LOCK THE DAY'}

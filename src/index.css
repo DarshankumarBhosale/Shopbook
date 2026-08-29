@@ -5,21 +5,37 @@
 
 /* ─── Design System Tokens ─── */
 @theme {
-  /* Colours — Night mode (default) */
-  --color-base: #0A1A14;
-  --color-surface: #12291F;
-  --color-raised: #1A3A2C;
-  --color-line: #1F4534;
-  --color-line-strong: #2D6349;
-  --color-tx1: #F5F2E8;
-  --color-tx2: #9CB0A5;
-  --color-tx3: #66817A;
-  --color-tx-inverse: #0A1A14;
-  --color-marigold: #F5A623;
-  --color-marigold-press: #D68F17;
-  --color-success: #3FBF7F;
-  --color-danger: #E04B36;
-  --color-platform: #A970C9;
+  /* ─── Colours — Daylight counter palette ───
+     Off-white ground, navy for anything you press, mint for money coming in,
+     coral only where the owner must act. */
+
+  --color-base: #F9FAFB;         /* page ground */
+  --color-surface: #FFFFFF;      /* cards, sheets, rows */
+  --color-raised: #F3F4F6;       /* grouped / inset blocks */
+  --color-line: #E5E7EB;         /* hairlines */
+  --color-line-strong: #CBD5E1;  /* emphasised borders, focus */
+
+  --color-tx1: #111827;          /* data and item names — 16:1 on base */
+  --color-tx2: #4B5563;          /* supporting copy — 7.5:1 */
+  --color-tx3: #6B7280;          /* labels and meta — 4.6:1 */
+  --color-tx-inverse: #FFFFFF;   /* on navy — 10:1 */
+  --color-tx-on-accent: #06281F;  /* on mint — mint is too light for white */
+
+  --color-primary: #1E3A8A;       /* headers, nav, anything you press */
+  --color-primary-press: #172E6B;
+
+  /* Mint at full strength is only ~2.4:1 on this ground, so it fills shapes
+     but never carries small text. `accent-text` is the readable stand-in for
+     rupee figures, at 5.5:1. */
+  --color-accent: #10B981;        /* save / checkout fills, positive chips */
+  --color-accent-text: #047857;   /* sales and profit figures */
+  --color-accent-press: #0E9F6E;
+
+  --color-success: #047857;
+  --color-danger: #EF4444;        /* alert fills and borders */
+  --color-danger-text: #DC2626;   /* alert text — 4.5:1 */
+
+  --color-platform: #7C3AED;
   --color-zomato: #E23744;
   --color-swiggy: #FC8019;
 
@@ -166,7 +182,7 @@
   }
 
   .tap:focus-visible {
-    outline: 2px solid var(--color-marigold);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 }

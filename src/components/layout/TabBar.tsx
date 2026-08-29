@@ -36,8 +36,8 @@ export const TabBar: React.FC = () => {
             onClick={() => handleTabClick(t.id)}
             className="tap flex-1 flex flex-col items-center justify-center h-full relative pt-1"
             style={{
-              borderTop: isActive ? '2px solid var(--color-marigold)' : '2px solid transparent',
-              color: isActive ? 'var(--color-marigold)' : 'var(--color-tx3)',
+              borderTop: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
+              color: isActive ? 'var(--color-primary)' : 'var(--color-tx3)',
               opacity: t.available ? 1 : 0.45,
             }}
           >
@@ -45,7 +45,7 @@ export const TabBar: React.FC = () => {
             <span
               className="font-display text-[10px] tracking-[0.06em] uppercase mt-0.5"
               style={{
-                color: isActive ? 'var(--color-marigold)' : 'var(--color-tx3)',
+                color: isActive ? 'var(--color-primary)' : 'var(--color-tx3)',
               }}
             >
               {t.label}

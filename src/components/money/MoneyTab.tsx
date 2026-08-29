@@ -39,9 +39,9 @@ export const MoneyTab: React.FC = () => {
             className="tap flex-1 min-h-[44px] rounded-md text-[13px] font-bold border transition-colors"
             style={{
               backgroundColor:
-                active === t.id ? 'var(--color-marigold)' : 'var(--color-surface)',
+                active === t.id ? 'var(--color-primary)' : 'var(--color-surface)',
               borderColor:
-                active === t.id ? 'var(--color-marigold)' : 'var(--color-line)',
+                active === t.id ? 'var(--color-primary)' : 'var(--color-line)',
               color: active === t.id ? 'var(--color-tx-inverse)' : 'var(--color-tx2)',
             }}
           >

@@ -102,7 +102,7 @@ export const StartDay: React.FC = () => {
           disabled={isSubmitting}
           className="tap w-full h-[52px] rounded-md font-display text-[20px] tracking-[0.06em] uppercase flex items-center justify-center transition-transform active:scale-[0.97]"
           style={{
-            backgroundColor: 'var(--color-marigold)',
+            backgroundColor: 'var(--color-primary)',
             color: 'var(--color-tx-inverse)',
           }}
         >

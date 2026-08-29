@@ -12,7 +12,7 @@ export const BigNum: React.FC<BigNumProps> = ({
   value,
   onChange,
   placeholder = '0',
-  color = 'var(--color-marigold)',
+  color = 'var(--color-tx1)',
   autoFocus = false,
 }) => {
   return (
