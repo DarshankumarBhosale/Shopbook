@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
+import { recordAudit } from '../db/audit';
 import type { DayBook } from '../db/types';
-import { toPaise } from '../lib/format';
+import { toPaise, formatRupees } from '../lib/format';
 import { computeVariance } from '../lib/cashRecon';
+import { assertOwner, type Role } from '../lib/permissions';
 
 interface DayState {
   openDay: DayBook | null;
@@ -13,8 +15,10 @@ interface DayState {
     countedRupees: number | string,
     expectedPaise: number,
     note: string,
-    snapshot: { grossSalesPaise: number; cogsPaise: number; expensesPaise: number }
+    snapshot: { grossSalesPaise: number; cogsPaise: number; expensesPaise: number },
+    role: Role | null
   ) => Promise<void>;
+  reopenDay: (dayId: number, role: Role | null) => Promise<void>;
 }
 
 export const useDayStore = create<DayState>((set, get) => ({
@@ -48,6 +52,12 @@ export const useDayStore = create<DayState>((set, get) => ({
     const created = await db.dayBook.get(id);
     if (!created) throw new Error('Failed to retrieve created day book');
 
+    await recordAudit({
+      action: 'day.open',
+      detail: `Opened with ${formatRupees(openingCashPaise)} in the drawer`,
+      dayId: id,
+    });
+
     set({ openDay: created });
     return created;
   },
@@ -56,8 +66,11 @@ export const useDayStore = create<DayState>((set, get) => ({
     countedRupees: number | string,
     expectedPaise: number,
     note: string,
-    snapshot: { grossSalesPaise: number; cogsPaise: number; expensesPaise: number }
+    snapshot: { grossSalesPaise: number; cogsPaise: number; expensesPaise: number },
+    role: Role | null
   ) => {
+    assertOwner(role, 'closeDay');
+
     const current = get().openDay;
     if (!current || !current.id) throw new Error('No open day to close');
 
@@ -77,7 +90,51 @@ export const useDayStore = create<DayState>((set, get) => ({
       totalExpenses: snapshot.expensesPaise,
     };
 
-    await db.dayBook.update(current.id, updatePayload);
+    await db.transaction('rw', [db.dayBook, db.auditLog], async () => {
+      await db.dayBook.update(current.id!, updatePayload);
+      await recordAudit({
+        action: 'day.close',
+        detail:
+          `Counted ${formatRupees(countedPaise)} against ${formatRupees(expectedPaise)}` +
+          (variancePaise === 0
+            ? ' · matched'
+            : ` · ${variancePaise > 0 ? 'excess' : 'short'} ${formatRupees(Math.abs(variancePaise))} · ${note.trim()}`),
+        role,
+        dayId: current.id,
+      });
+    });
+
     set({ openDay: null });
+  },
+
+  /**
+   * Reopens a locked day so a mistake found after closing can be corrected.
+   *
+   * Rule 4: a closed day is immutable and only the owner may reopen it, with
+   * the reopening itself logged. Reopening the existing book also stops a
+   * second day book being created for the same date.
+   */
+  reopenDay: async (dayId: number, role: Role | null) => {
+    assertOwner(role, 'reopenDay');
+
+    await db.transaction('rw', [db.dayBook, db.auditLog], async () => {
+      const day = await db.dayBook.get(dayId);
+      if (!day) throw new Error('That day book no longer exists');
+      if (day.status === 'open') return;
+
+      const alreadyOpen = await db.dayBook.filter((d) => d.status === 'open').first();
+      if (alreadyOpen) throw new Error('Close the open day first');
+
+      await db.dayBook.update(dayId, { status: 'open' });
+      await recordAudit({
+        action: 'day.reopen',
+        detail: `Reopened after closing at ${formatRupees(day.closingCashCounted)}`,
+        role,
+        dayId,
+      });
+    });
+
+    const reopened = await db.dayBook.get(dayId);
+    set({ openDay: reopened ?? null });
   },
 }));

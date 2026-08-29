@@ -95,7 +95,8 @@ describe('Phase 1 Full Day Operational Flow', () => {
         grossSalesPaise: 3000,
         cogsPaise: sales[0].cogs,
         expensesPaise: 40000,
-      }
+      },
+      'owner'
     );
 
     // 6. Verify Day Book record is now locked and closed

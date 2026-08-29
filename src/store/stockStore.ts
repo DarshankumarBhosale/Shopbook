@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
+import { recordAudit as logAudit } from '../db/audit';
+import { computeWeightedAvgCost } from '../lib/stockMoves';
 import type { StockMove, Expense } from '../db/types';
 
 export const WASTAGE_REASONS = ['Spoiled', 'Spilled', 'Unsold at close', 'Staff meal'] as const;
@@ -39,41 +41,70 @@ export const useStockStore = create<StockState>(() => ({
     const effectiveRate = ratePaise !== undefined ? ratePaise : rm.avgCost;
     const now = new Date().toISOString();
 
-    await db.transaction('rw', [db.stockMoves, db.rawMaterials, db.expenses], async () => {
-      await db.stockMoves.add({
-        dayId,
-        rmId,
-        type: 'in',
-        qty,
-        rate: effectiveRate,
-        reason: 'Stock in',
-        createdAt: now,
-      } as StockMove);
-
-      if (ratePaise !== undefined) {
-        await db.rawMaterials.update(rmId, { avgCost: ratePaise });
-        await db.expenses.add({
+    await db.transaction(
+      'rw',
+      [db.stockMoves, db.rawMaterials, db.expenses, db.auditLog],
+      async () => {
+        await db.stockMoves.add({
           dayId,
-          category: 'Raw material',
-          amount: Math.round(qty * ratePaise),
-          paymentMode: 'Cash',
-          note: `${rm.name} ${qty}${rm.unit}`,
-        } as Expense);
+          rmId,
+          type: 'in',
+          qty,
+          rate: effectiveRate,
+          reason: 'Stock in',
+          createdAt: now,
+        } as StockMove);
+
+        if (ratePaise !== undefined) {
+          // Blend the new rate into what is already on the shelf rather than
+          // replacing it, so one cheap sack does not reprice existing stock.
+          const priorMoves = await db.stockMoves.where('rmId').equals(rmId).toArray();
+          const qtyBefore =
+            priorMoves.reduce((sum, m) => sum + m.qty, 0) - qty;
+
+          await db.rawMaterials.update(rmId, {
+            avgCost: computeWeightedAvgCost(qtyBefore, rm.avgCost, qty, ratePaise),
+          });
+
+          await db.expenses.add({
+            dayId,
+            category: 'Raw material',
+            amount: Math.round(qty * ratePaise),
+            paymentMode: 'Cash',
+            note: `${rm.name} ${qty}${rm.unit}`,
+          } as Expense);
+        }
+
+        await logAudit({
+          action: 'stock.in',
+          detail: `${rm.name} +${qty}${rm.unit}${ratePaise !== undefined ? ` at ${ratePaise}p/${rm.unit}` : ''}`,
+          dayId,
+        });
       }
-    });
+    );
   },
 
   recordWastage: async ({ dayId, rmId, qty, reason }) => {
     if (qty <= 0) throw new Error('Quantity must be greater than zero');
 
-    await db.stockMoves.add({
-      dayId,
-      rmId,
-      type: 'wastage',
-      qty: -qty,
-      reason,
-      createdAt: new Date().toISOString(),
-    } as StockMove);
+    await db.transaction('rw', [db.stockMoves, db.rawMaterials, db.auditLog], async () => {
+      const rm = await db.rawMaterials.get(rmId);
+
+      await db.stockMoves.add({
+        dayId,
+        rmId,
+        type: 'wastage',
+        qty: -qty,
+        reason,
+        createdAt: new Date().toISOString(),
+      } as StockMove);
+
+      await logAudit({
+        action: 'stock.wastage',
+        detail: `${rm?.name ?? `#${rmId}`} −${qty}${rm?.unit ?? ''} · ${reason}`,
+        dayId,
+      });
+    });
   },
 
   // Physical count reconciliation: logs the delta between the counted quantity
@@ -84,13 +115,25 @@ export const useStockStore = create<StockState>(() => ({
     const delta = countedQty - currentQty;
     if (delta === 0) return;
 
-    await db.stockMoves.add({
-      dayId,
-      rmId,
-      type: 'audit',
-      qty: delta,
-      reason: 'Physical count',
-      createdAt: new Date().toISOString(),
-    } as StockMove);
+    await db.transaction('rw', [db.stockMoves, db.rawMaterials, db.auditLog], async () => {
+      const rm = await db.rawMaterials.get(rmId);
+
+      await db.stockMoves.add({
+        dayId,
+        rmId,
+        type: 'audit',
+        qty: delta,
+        reason: 'Physical count',
+        createdAt: new Date().toISOString(),
+      } as StockMove);
+
+      await logAudit({
+        action: 'stock.count',
+        detail:
+          `${rm?.name ?? `#${rmId}`} counted ${countedQty}${rm?.unit ?? ''}, ` +
+          `ledger said ${currentQty} · ${delta > 0 ? '+' : ''}${delta}`,
+        dayId,
+      });
+    });
   },
 }));

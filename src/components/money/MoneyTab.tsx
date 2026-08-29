@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useUIStore } from '../../store/uiStore';
 import { ExpenseEntry } from './ExpenseEntry';
 import { KhataView } from './KhataView';
+import { OrdersView } from './OrdersView';
 import { CloseDay } from './CloseDay';
 
-type SubView = 'expense' | 'khata' | 'close';
+type SubView = 'expense' | 'khata' | 'orders' | 'close';
 
 export const MoneyTab: React.FC = () => {
   const role = useUIStore((state) => state.role);
@@ -16,11 +17,13 @@ export const MoneyTab: React.FC = () => {
       ? [
           { id: 'expense', label: 'Expense' },
           { id: 'khata', label: 'Khata' },
-          { id: 'close', label: 'Close day' },
+          { id: 'orders', label: 'Orders' },
+          { id: 'close', label: 'Close' },
         ]
       : [
           { id: 'expense', label: 'Expense' },
           { id: 'khata', label: 'Khata' },
+          { id: 'orders', label: 'Orders' },
         ];
 
   const active: SubView = subView === 'close' && role !== 'owner' ? 'expense' : subView;
@@ -49,6 +52,7 @@ export const MoneyTab: React.FC = () => {
 
       {active === 'expense' && <ExpenseEntry />}
       {active === 'khata' && <KhataView />}
+      {active === 'orders' && <OrdersView />}
       {active === 'close' && role === 'owner' && <CloseDay />}
     </div>
   );

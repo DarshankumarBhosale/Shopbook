@@ -9,6 +9,8 @@ import { useUIStore } from '../../store/uiStore';
 import { ItemTile } from '../common/ItemTile';
 import { Label } from '../common/Label';
 import { formatRupees, formatRupeesRaw } from '../../lib/format';
+import { computeAllStock, computeLowStock } from '../../lib/stockMoves';
+import { computeShortages } from '../../lib/shortage';
 import type { PaymentMode } from '../../db/types';
 
 export const SellTab: React.FC = () => {
@@ -25,6 +27,9 @@ export const SellTab: React.FC = () => {
   const [newCustomerName, setNewCustomerName] = useState('');
 
   const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
+  const recipes = useLiveQuery(() => db.recipes.toArray(), []) || [];
+  const rawMaterials = useLiveQuery(() => db.rawMaterials.toArray(), []) || [];
+  const stockMoves = useLiveQuery(() => db.stockMoves.toArray(), []) || [];
 
   // Reactive queries from Dexie
   const items = useLiveQuery(() => db.items.filter((i) => i.isActive).toArray(), []) || [];
@@ -76,6 +81,13 @@ export const SellTab: React.FC = () => {
   const cartGross = cartLines.reduce((sum, line) => sum + line.amount, 0);
   const totalCartCount = cartLines.reduce((sum, line) => sum + line.qty, 0);
 
+  // Warn before the sale, not at the next stock count.
+  const shortages = useMemo(() => {
+    if (cartLines.length === 0) return [];
+    const stockMap = computeAllStock(stockMoves, rawMaterials);
+    return computeShortages(cartLines, recipes, rawMaterials, stockMap);
+  }, [cartLines, recipes, rawMaterials, stockMoves]);
+
   // Measure cart sheet height dynamically with ResizeObserver
   useEffect(() => {
     const el = cartSheetRef.current;
@@ -115,7 +127,15 @@ export const SellTab: React.FC = () => {
         customerId,
       });
       setIsPickingCustomer(false);
-      if (paymentMode === 'Udhaar') {
+
+      // Flowchart: every sale re-checks reorder levels. Surfacing it here means
+      // you learn you are out of pav at the counter, not tomorrow morning.
+      const freshMoves = await db.stockMoves.toArray();
+      const low = computeLowStock(rawMaterials, computeAllStock(freshMoves, rawMaterials));
+
+      if (low.length > 0) {
+        showToast(`Buy today · ${low.slice(0, 3).map((r) => r.name).join(', ')}`);
+      } else if (paymentMode === 'Udhaar') {
         const who = customers.find((c) => c.id === customerId);
         showToast(`${formatRupees(grossPaise)} on ${who ? who.name : 'khata'}`);
       } else {
@@ -191,7 +211,7 @@ export const SellTab: React.FC = () => {
           className="fixed left-1/2 -translate-x-1/2 w-full max-w-md bg-surface border-t-2 z-40 px-4 pt-3 pb-4 shadow-2xl transition-transform"
           style={{
             bottom: '62px',
-            borderColor: 'var(--color-marigold)',
+            borderColor: 'var(--color-line-strong)',
           }}
         >
           {/* Cart item rows */}
@@ -227,6 +247,17 @@ export const SellTab: React.FC = () => {
               {formatRupeesRaw(cartGross / 100)}
             </div>
           </div>
+
+          {/* Not enough on the shelf for what is in the cart */}
+          {shortages.length > 0 && (
+            <div className="mb-3 rounded-sm border border-danger px-3 py-2">
+              <span className="text-body-s" style={{ color: 'var(--color-danger)' }}>
+                Short on {shortages.slice(0, 3).map((s) => s.name).join(', ')}
+                {shortages.length > 3 && ` +${shortages.length - 3}`} — this sale
+                takes stock below zero
+              </span>
+            </div>
+          )}
 
           {/* Who is taking this on khata? Shown in place of the payment row. */}
           {isPickingCustomer ? (
@@ -301,7 +332,7 @@ export const SellTab: React.FC = () => {
                 className="tap h-[52px] rounded-md font-display text-[18px] tracking-[0.05em] uppercase flex items-center justify-center border transition-transform active:scale-[0.97]"
                 style={{
                   backgroundColor: 'var(--color-base)',
-                  borderColor: 'var(--color-marigold)',
+                  borderColor: 'var(--color-line-strong)',
                   color: 'var(--color-tx1)',
                 }}
               >

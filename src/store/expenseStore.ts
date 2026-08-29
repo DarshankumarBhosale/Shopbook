@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
 import type { Expense, PaymentMode } from '../db/types';
-import { toPaise } from '../lib/format';
+import { toPaise, formatRupees } from '../lib/format';
+import { recordAudit } from '../db/audit';
 
 export const EXPENSE_CATEGORIES = [
   'Raw material',
@@ -39,7 +40,16 @@ export const useExpenseStore = create<ExpenseState>(() => ({
       note: (note || '').trim(),
     };
 
-    const id = await db.expenses.add(expenseRecord as Expense);
+    let id = 0;
+    await db.transaction('rw', [db.expenses, db.auditLog], async () => {
+      id = await db.expenses.add(expenseRecord as Expense);
+      await recordAudit({
+        action: 'expense.create',
+        detail: `${category} ${formatRupees(amountPaise)} · ${paymentMode}`,
+        dayId,
+      });
+    });
+
     return id;
   },
 }));

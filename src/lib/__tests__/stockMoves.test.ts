@@ -5,6 +5,7 @@ import {
   computeAllStock,
   computeLowStock,
   computeWastageValue,
+  computeWeightedAvgCost,
 } from '../stockMoves';
 import type { Recipe, StockMove, RawMaterial } from '../../db/types';
 
@@ -114,5 +115,30 @@ describe('stockMoves pure functions', () => {
 
     // 5 * 400 (Pav) + 200 * 3 (Potato) = 2000 + 600 = 2600
     expect(computeWastageValue(moves, rawMaterials)).toBe(2600);
+  });
+});
+
+describe('computeWeightedAvgCost', () => {
+  it('blends the new rate against what is already on the shelf', () => {
+    // 1000g at 20p/g on hand, buying 1000g at 30p/g -> 25p/g.
+    expect(computeWeightedAvgCost(1000, 20, 1000, 30)).toBe(25);
+  });
+
+  it('weights by quantity, not by number of purchases', () => {
+    // A small cheap sack barely moves the cost of a large expensive stock.
+    // (9000 * 20 + 1000 * 10) / 10000 = 19p/g.
+    expect(computeWeightedAvgCost(9000, 20, 1000, 10)).toBe(19);
+  });
+
+  it('takes the incoming rate when the shelf is empty', () => {
+    expect(computeWeightedAvgCost(0, 20, 500, 30)).toBe(30);
+  });
+
+  it('treats negative stock on hand as empty rather than skewing the blend', () => {
+    expect(computeWeightedAvgCost(-200, 20, 500, 30)).toBe(30);
+  });
+
+  it('leaves the cost alone when nothing is actually bought', () => {
+    expect(computeWeightedAvgCost(1000, 20, 0, 99)).toBe(20);
   });
 });

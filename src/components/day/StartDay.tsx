@@ -12,7 +12,9 @@ export const StartDay: React.FC = () => {
   const [openingCash, setOpeningCash] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const openNewDay = useDayStore((state) => state.openNewDay);
+  const reopenDay = useDayStore((state) => state.reopenDay);
   const showToast = useUIStore((state) => state.showToast);
+  const role = useUIStore((state) => state.role);
 
   // Spec §A: the drawer isn't emptied overnight, so today opens with whatever
   // was counted at the last close. Prefilled once, then left alone so it never
@@ -32,6 +34,16 @@ export const StartDay: React.FC = () => {
     }
   }, [closedDays, carryForwardPaise]);
 
+  // A day book already closed today. Reopening that book is the correct fix
+  // for a mistake found after locking up — opening a second one would leave
+  // two books for the same date and make every per-day figure ambiguous.
+  const todaysClosedDay = React.useMemo(() => {
+    const today = new Date().toDateString();
+    return (closedDays ?? [])
+      .filter((d) => new Date(d.date).toDateString() === today)
+      .sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? ''))[0];
+  }, [closedDays]);
+
   const handleOpenDay = async () => {
     try {
       setIsSubmitting(true);
@@ -40,6 +52,20 @@ export const StartDay: React.FC = () => {
     } catch (err) {
       console.error(err);
       showToast('Failed to open day');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReopen = async () => {
+    if (!todaysClosedDay?.id) return;
+    try {
+      setIsSubmitting(true);
+      await reopenDay(todaysClosedDay.id, role);
+      showToast("Today's book reopened");
+    } catch (err) {
+      console.error(err);
+      showToast(err instanceof Error ? err.message : 'Could not reopen the day');
     } finally {
       setIsSubmitting(false);
     }
@@ -82,6 +108,23 @@ export const StartDay: React.FC = () => {
         >
           {isSubmitting ? 'OPENING...' : 'OPEN DAY BOOK'}
         </button>
+
+        {todaysClosedDay && role === 'owner' && (
+          <>
+            <button
+              type="button"
+              onClick={handleReopen}
+              disabled={isSubmitting}
+              className="tap w-full min-h-[44px] mt-3 rounded-md border border-line-strong bg-surface text-body-m font-semibold text-tx1"
+            >
+              Reopen today's book
+            </button>
+            <p className="text-body-s text-tx3 mt-2">
+              Closed at {formatRupees(todaysClosedDay.closingCashCounted)}. Reopen it
+              to fix a mistake rather than starting a second book for today.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

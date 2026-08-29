@@ -7,12 +7,14 @@ import { BigNum } from '../common/BigNum';
 import { Label } from '../common/Label';
 import { computeExpectedCash, computeVariance, isReconciliationValid } from '../../lib/cashRecon';
 import { computeKhataBalances, computeTotalOutstanding } from '../../lib/khata';
+import { computeAllStock, computeWastageValue } from '../../lib/stockMoves';
 import { formatRupees, toPaise } from '../../lib/format';
 
 export const CloseDay: React.FC = () => {
   const openDay = useDayStore((state) => state.openDay);
   const closeCurrentDay = useDayStore((state) => state.closeCurrentDay);
   const showToast = useUIStore((state) => state.showToast);
+  const role = useUIStore((state) => state.role);
 
   const [counted, setCounted] = useState('');
   const [note, setNote] = useState('');
@@ -51,6 +53,21 @@ export const CloseDay: React.FC = () => {
   const totalGrossSalesPaise = daySales.reduce((sum, s) => sum + s.grossAmount, 0);
   const totalCogsPaise = daySales.reduce((sum, s) => sum + s.cogs, 0);
   const totalExpensesPaise = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const profitPaise = totalGrossSalesPaise - totalCogsPaise - totalExpensesPaise;
+
+  // Closing stock value and today's wastage, for the day summary.
+  const allStockMoves = useLiveQuery(() => db.stockMoves.toArray(), []) || [];
+  const rawMaterials = useLiveQuery(() => db.rawMaterials.toArray(), []) || [];
+
+  const stockMap = computeAllStock(allStockMoves, rawMaterials);
+  const closingStockValuePaise = rawMaterials.reduce(
+    (sum, rm) => sum + Math.max(0, stockMap[rm.id!] ?? 0) * rm.avgCost,
+    0
+  );
+  const wastageValuePaise = computeWastageValue(
+    allStockMoves.filter((m) => m.dayId === openDay?.id),
+    rawMaterials
+  );
 
   // Khata repaid in cash today is physically in the drawer and has to be
   // counted, or every repayment shows up as an unexplained surplus.
@@ -77,11 +94,17 @@ export const CloseDay: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      await closeCurrentDay(counted, expectedCashPaise, note, {
-        grossSalesPaise: totalGrossSalesPaise,
-        cogsPaise: totalCogsPaise,
-        expensesPaise: totalExpensesPaise,
-      });
+      await closeCurrentDay(
+        counted,
+        expectedCashPaise,
+        note,
+        {
+          grossSalesPaise: totalGrossSalesPaise,
+          cogsPaise: totalCogsPaise,
+          expensesPaise: totalExpensesPaise,
+        },
+        role
+      );
       showToast('Day locked');
     } catch (err) {
       console.error('Failed to close day:', err);
@@ -129,6 +152,57 @@ export const CloseDay: React.FC = () => {
           <span className="text-body-m font-semibold text-tx1">Drawer should hold</span>
           <span className="font-mono text-mono-l font-bold text-marigold">
             {formatRupees(expectedCashPaise)}
+          </span>
+        </div>
+      </div>
+
+      {/* Day summary — flowchart C5: what the day actually earned */}
+      <div className="bg-surface border border-line rounded-md p-4 mb-4">
+        <Label>Day summary</Label>
+
+        <div className="flex items-baseline justify-between py-1 text-body-m mt-1">
+          <span className="text-tx2">Sales</span>
+          <span className="font-mono text-tx1 font-medium">
+            {formatRupees(totalGrossSalesPaise)}
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between py-1 text-body-m">
+          <span className="text-tx2">Cost of ingredients</span>
+          <span className="font-mono text-tx1 font-medium">
+            − {formatRupees(totalCogsPaise)}
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between py-1 text-body-m">
+          <span className="text-tx2">Expenses</span>
+          <span className="font-mono text-tx1 font-medium">
+            − {formatRupees(totalExpensesPaise)}
+          </span>
+        </div>
+        {wastageValuePaise > 0 && (
+          <div className="flex items-baseline justify-between py-1 text-body-m">
+            <span className="text-tx2">Wastage</span>
+            <span className="font-mono font-medium" style={{ color: 'var(--color-danger)' }}>
+              {formatRupees(wastageValuePaise)}
+            </span>
+          </div>
+        )}
+
+        <div className="border-t border-line mt-2 pt-2 flex items-baseline justify-between">
+          <span className="text-body-m font-semibold text-tx1">Profit today</span>
+          <span
+            className="font-mono text-mono-l font-bold"
+            style={{
+              color: profitPaise >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
+            }}
+          >
+            {formatRupees(profitPaise)}
+          </span>
+        </div>
+
+        <div className="flex items-baseline justify-between pt-1">
+          <span className="text-body-s text-tx3">Closing stock value</span>
+          <span className="font-mono text-body-s text-tx2">
+            {formatRupees(closingStockValuePaise)}
           </span>
         </div>
       </div>

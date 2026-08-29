@@ -81,6 +81,14 @@ export interface Sale {
   customerId?: number;
   createdBy?: string;
   createdAt: string;
+  /**
+   * Set on a reversing entry, pointing at the sale it cancels. Nothing is ever
+   * deleted: a mistake is corrected by appending the opposite amounts, so both
+   * the error and the correction stay on the record.
+   */
+  reversesSaleId?: number;
+  /** Why the sale was reversed. Required on a reversing entry. */
+  reversalReason?: string;
 }
 
 export interface SaleLine {

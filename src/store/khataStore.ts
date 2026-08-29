@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
 import type { Payment, PaymentMode, Customer } from '../db/types';
-import { toPaise } from '../lib/format';
+import { toPaise, formatRupees } from '../lib/format';
+import { recordAudit } from '../db/audit';
 
 interface KhataState {
   addCustomer: (name: string, phone?: string) => Promise<number>;
@@ -39,6 +40,17 @@ export const useKhataStore = create<KhataState>(() => ({
       createdAt: new Date().toISOString(),
     };
 
-    return await db.payments.add(record as Payment);
+    let id = 0;
+    await db.transaction('rw', [db.payments, db.customers, db.auditLog], async () => {
+      const who = await db.customers.get(customerId);
+      id = await db.payments.add(record as Payment);
+      await recordAudit({
+        action: 'khata.receive',
+        detail: `${formatRupees(amount)} from ${who?.name ?? `#${customerId}`} · ${paymentMode}`,
+        dayId,
+      });
+    });
+
+    return id;
   },
 }));

@@ -71,6 +71,32 @@ export function computeLowStock(
 }
 
 /**
+ * Pure function: the new weighted average cost after buying more of something.
+ *
+ * Spec §D — Stock In "updates weighted average cost". Replacing the old cost
+ * with the newest rate would mean one cheap sack reprices everything already
+ * on the shelf, so COGS drifts after any price swing. Blending by quantity
+ * keeps the cost of what is actually in the kitchen.
+ *
+ * Falls back to the incoming rate when there is nothing on hand to blend with.
+ */
+export function computeWeightedAvgCost(
+  currentQty: number,
+  currentAvgCostPaise: number,
+  incomingQty: number,
+  incomingRatePaise: number
+): number {
+  if (incomingQty <= 0) return currentAvgCostPaise;
+
+  const usableQty = Math.max(0, currentQty);
+  const totalQty = usableQty + incomingQty;
+  if (totalQty <= 0) return incomingRatePaise;
+
+  const totalValue = usableQty * currentAvgCostPaise + incomingQty * incomingRatePaise;
+  return Math.round(totalValue / totalQty);
+}
+
+/**
  * Pure function: Total value (paise) of all wastage stock moves, priced at each
  * raw material's current average cost.
  */

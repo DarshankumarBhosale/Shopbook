@@ -32,13 +32,13 @@ export const MoreTab: React.FC = () => {
   }
 
   const handlePrice = async (
-    action: (id: number, paise: number) => Promise<void>,
+    action: (id: number, paise: number, r: typeof role) => Promise<void>,
     itemId: number,
     paise: number,
     name: string
   ) => {
     try {
-      await action(itemId, paise);
+      await action(itemId, paise, role);
       showToast(`${name} · ${formatRupees(paise)}`);
     } catch (err) {
       console.error('Failed to update price:', err);
@@ -48,7 +48,7 @@ export const MoreTab: React.FC = () => {
 
   const handleToggle = async (itemId: number, next: boolean, name: string) => {
     try {
-      await setActive(itemId, next);
+      await setActive(itemId, next, role);
       showToast(next ? `${name} back on the board` : `${name} taken off the board`);
     } catch (err) {
       console.error('Failed to change availability:', err);
@@ -61,7 +61,7 @@ export const MoreTab: React.FC = () => {
     const b = sortedItems[index + delta];
     if (!a || !b) return;
     try {
-      await swapSortOrder(a, b);
+      await swapSortOrder(a, b, role);
       showToast(`Moved ${a.name}`);
     } catch (err) {
       console.error('Failed to move item:', err);
