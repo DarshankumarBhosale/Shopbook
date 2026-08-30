@@ -68,7 +68,7 @@ export const ReportsTab: React.FC = () => {
   ) || [];
   const allSales = useLiveQuery(() => db.sales.toArray(), []) || [];
   const allSaleLines = useLiveQuery(() => db.saleLines.toArray(), []) || [];
-  const allExpenses = useLiveQuery(() => db.expenses.toArray(), []) || [];
+  const allExpenses = useLiveQuery(() => db.expenses.filter((e) => !e.isDeleted).toArray(), []) || [];
   const allItems = useLiveQuery(() => db.items.toArray(), []) || [];
   const allStockMoves = useLiveQuery(() => db.stockMoves.toArray(), []) || [];
   const allRawMaterials = useLiveQuery(() => db.rawMaterials.toArray(), []) || [];

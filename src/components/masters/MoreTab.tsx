@@ -8,6 +8,35 @@ import { Label } from '../common/Label';
 import { PriceInput } from '../common/PriceInput';
 import { formatRupees } from '../../lib/format';
 import { parsePriceRupees, suggestOnlinePrice } from '../../lib/pricing';
+import { BackupView } from '../backup/BackupView';
+
+type Section = 'menu' | 'backup';
+
+const SectionSwitch: React.FC<{
+  section: Section;
+  onChange: (s: Section) => void;
+}> = ({ section, onChange }) => (
+  <div className="flex gap-2 mb-3">
+    {([['menu', 'Menu & prices'], ['backup', 'Backup']] as [Section, string][]).map(
+      ([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onChange(id)}
+          className="tap flex-1 min-h-[44px] rounded-md text-[13px] font-bold border transition-colors"
+          style={{
+            backgroundColor:
+              section === id ? 'var(--color-primary)' : 'var(--color-surface)',
+            borderColor: section === id ? 'var(--color-primary)' : 'var(--color-line)',
+            color: section === id ? 'var(--color-tx-inverse)' : 'var(--color-tx2)',
+          }}
+        >
+          {label}
+        </button>
+      )
+    )}
+  </div>
+);
 
 export const MoreTab: React.FC = () => {
   const role = useUIStore((state) => state.role);
@@ -30,16 +59,23 @@ export const MoreTab: React.FC = () => {
 
   const activeCount = sortedItems.filter((i) => i.isActive).length;
 
+  const [section, setSection] = useState<Section>('menu');
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState({ name: '', category: 'Packaged', price: '', cost: '' });
   const [isSaving, setIsSaving] = useState(false);
 
+  // A helper can still reach Backup — they may be the one holding the till.
   if (role !== 'owner') {
+    return <BackupView />;
+  }
+
+  if (section === 'backup') {
     return (
-      <div className="flex-1 flex items-center justify-center px-6 py-10">
-        <p className="text-body-m text-tx3 text-center">
-          Menu and prices are owner-only.
-        </p>
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="px-4 pt-3">
+          <SectionSwitch section={section} onChange={setSection} />
+        </div>
+        <BackupView />
       </div>
     );
   }
@@ -125,6 +161,8 @@ export const MoreTab: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col px-4 pt-3 pb-[100px] overflow-y-auto noscroll">
+      <SectionSwitch section={section} onChange={setSection} />
+
       <div className="mb-4">
         <Label>Menu &amp; prices</Label>
         <p className="text-body-s text-tx2 mt-1">

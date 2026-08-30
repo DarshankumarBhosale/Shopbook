@@ -27,7 +27,7 @@ export const CloseDay: React.FC = () => {
   ) || [];
 
   const dayExpenses = useLiveQuery(
-    () => (openDay?.id ? db.expenses.where('dayId').equals(openDay.id).toArray() : []),
+    () => (openDay?.id ? db.expenses.where('dayId').equals(openDay.id).filter((e) => !e.isDeleted).toArray() : []),
     [openDay?.id]
   ) || [];
 

@@ -19,6 +19,8 @@ export const OWNER_ONLY = {
   closeDay: 'Closing the day',
   reopenDay: 'Reopening a day',
   reverseSale: 'Reversing a sale',
+  editExpense: 'Editing an expense',
+  restoreBackup: 'Restoring a backup',
   editMenu: 'Editing the menu',
 } as const;
 

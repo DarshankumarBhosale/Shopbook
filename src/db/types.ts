@@ -137,6 +137,12 @@ export interface Expense {
   amount: number; // paise
   paymentMode: PaymentMode;
   note: string;
+  /**
+   * Deleted by the owner. The row stays and the audit log keeps what it was,
+   * but it drops out of every total — a deleted expense that still counted
+   * against the drawer would be worse than not deleting it at all.
+   */
+  isDeleted?: boolean;
 }
 
 export interface Customer {
