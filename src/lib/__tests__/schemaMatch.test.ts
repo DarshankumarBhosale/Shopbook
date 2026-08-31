@@ -105,7 +105,7 @@ describe('the cloud schema matches the app types', () => {
     // the timestamp is written server-side — by a trigger applied from a list.
     // A table added to the schema but left off that list would silently keep
     // whatever timestamp it was created with and never lose a merge again.
-    const applied = loopArray('touch_%I');
+    const applied = loopArray('create trigger');
     for (const table of SYNC_TABLES) {
       expect(applied, `${table} gets no updatedAt trigger`).toContain(table);
     }
@@ -125,6 +125,25 @@ describe('the cloud schema matches the app types', () => {
     for (const table of ['sales', 'saleLines', 'expenses', 'stockMoves', 'payments', 'dayBook']) {
       expect(live, `${table} will not arrive live`).toContain(table);
     }
+  });
+
+  it('never glues text onto a quoted identifier placeholder', () => {
+    // `format('... touch_%I ...', t)` expands to touch_"dayBook" — a bare
+    // prefix against a quoted identifier, which Postgres rejects. Nothing
+    // catches it until the whole script fails on the first table, so the
+    // identifier has to be built before it is quoted: format('%I', 'touch_' || t).
+    // Comments explain the trap and contain the bad form on purpose.
+    const code = sql.replace(/--[^\n]*/g, '');
+
+    const glued = [...code.matchAll(/(\S)%I|%I(\w)/g)]
+      .filter((m) => {
+        const before = m[1];
+        // A placeholder may legitimately follow a quote or an opening bracket.
+        return before ? !["'", '(', '"'].includes(before) : true;
+      })
+      .map((m) => m[0]);
+
+    expect(glued, `identifier placeholders glued to text: ${glued.join(', ')}`).toEqual([]);
   });
 
   it('leaves the meta table out — it is this phone identity, not the shop books', () => {

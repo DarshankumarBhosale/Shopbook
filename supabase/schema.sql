@@ -185,10 +185,13 @@ begin
     'shops','dayBook','items','rawMaterials','recipes','sales',
     'saleLines','stockMoves','expenses','customers','payments','auditLog'
   ] loop
-    execute format('drop trigger if exists touch_%I on %I', t, t);
+    -- The trigger name is built first and quoted as a whole. Writing
+    -- `touch_%I` instead glues a bare prefix onto a quoted identifier —
+    -- touch_"dayBook" — which Postgres rejects outright.
+    execute format('drop trigger if exists %I on %I', 'touch_' || t, t);
     execute format(
-      'create trigger touch_%I before insert or update on %I
-       for each row execute function touch_updated_at()', t, t);
+      'create trigger %I before insert or update on %I
+       for each row execute function touch_updated_at()', 'touch_' || t, t);
   end loop;
 end $$;
 
@@ -211,15 +214,24 @@ begin
 end $$;
 
 -- Live updates: the other phone's sales appear without waiting for a poll.
+--
+-- Supabase creates the `supabase_realtime` publication itself, but if it is
+-- ever missing this would fail at the very last step and take the whole script
+-- with it — after the tables were already right. Create it rather than die.
 do $$
 declare t text;
 begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+
   foreach t in array array[
     'dayBook','items','rawMaterials','recipes','sales','saleLines',
     'stockMoves','expenses','customers','payments'
   ] loop
     begin
       execute format('alter publication supabase_realtime add table %I', t);
+    -- Already published: re-running the script must stay harmless.
     exception when duplicate_object then null;
     end;
   end loop;
