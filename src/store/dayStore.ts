@@ -37,30 +37,55 @@ export const useDayStore = create<DayState>((set, get) => ({
     }
   },
 
+  /**
+   * Opens the day, or joins the one already open.
+   *
+   * Two open day books split a single day's trade in half: sales land on
+   * whichever one happens to be found first, the other is orphaned still open,
+   * and neither closing count reconciles. It used to be possible two ways — a
+   * double-tap on Open Day Book, and, once two phones are in use, the helper
+   * opening a day because their phone has not yet synced the owner's.
+   *
+   * Joining the existing day is deliberate rather than refusing: on a helper's
+   * phone that is briefly behind, an error would leave them unable to sell at
+   * all. The check and the insert share a transaction so a double-tap cannot
+   * slip between them.
+   */
   openNewDay: async (openingCashRupees: number | string) => {
     const openingCashPaise = toPaise(openingCashRupees);
-    const newDay: Omit<DayBook, 'id'> = {
-      date: new Date().toISOString(),
-      openingCash: openingCashPaise,
-      closingCashExpected: 0,
-      closingCashCounted: 0,
-      variance: 0,
-      note: '',
-      status: 'open',
-    };
+    let result: DayBook | undefined;
 
-    const id = await db.dayBook.add({ ...newDay, id: await nextId(db.dayBook) } as DayBook);
-    const created = await db.dayBook.get(id);
-    if (!created) throw new Error('Failed to retrieve created day book');
+    await db.transaction('rw', [db.dayBook, db.auditLog, db.meta], async () => {
+      const alreadyOpen = await db.dayBook.filter((d) => d.status === 'open').first();
+      if (alreadyOpen) {
+        result = alreadyOpen;
+        return;
+      }
 
-    await recordAudit({
-      action: 'day.open',
-      detail: `Opened with ${formatRupees(openingCashPaise)} in the drawer`,
-      dayId: id,
+      const newDay: Omit<DayBook, 'id'> = {
+        date: new Date().toISOString(),
+        openingCash: openingCashPaise,
+        closingCashExpected: 0,
+        closingCashCounted: 0,
+        variance: 0,
+        note: '',
+        status: 'open',
+      };
+
+      const id = await db.dayBook.add({ ...newDay, id: await nextId(db.dayBook) } as DayBook);
+      result = await db.dayBook.get(id);
+
+      await recordAudit({
+        action: 'day.open',
+        detail: `Opened with ${formatRupees(openingCashPaise)} in the drawer`,
+        dayId: id,
+      });
     });
 
-    set({ openDay: created });
-    return created;
+    if (!result) throw new Error('Failed to retrieve created day book');
+
+    set({ openDay: result });
+    return result;
   },
 
   closeCurrentDay: async (
