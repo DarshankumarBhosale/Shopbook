@@ -79,7 +79,7 @@ export type BackupCheck =
  * Restoring replaces the whole database, so a wrong or damaged file has to be
  * rejected before anything is written — not discovered halfway through.
  */
-export function checkBackup(raw: unknown): BackupCheck {
+export function checkBackup(raw: unknown, appSchemaVersion?: number): BackupCheck {
   if (typeof raw !== 'object' || raw === null) {
     return { ok: false, error: 'That file is not a ShopBook backup' };
   }
@@ -95,6 +95,23 @@ export function checkBackup(raw: unknown): BackupCheck {
       error: 'That backup was made by a newer version of ShopBook',
     };
   }
+  // `format` above covers the file's own layout. This covers the shape of the
+  // rows inside it, which is set by the database version — the two move
+  // independently. Restoring rows from a newer database into an older app
+  // writes fields it does not understand and skips migrations it never ran,
+  // and the damage is silent. It is a realistic case, too: the handbook tells
+  // you to restore onto a new phone, and the other phone may not be updated.
+  if (
+    appSchemaVersion !== undefined &&
+    typeof f.schemaVersion === 'number' &&
+    f.schemaVersion > appSchemaVersion
+  ) {
+    return {
+      ok: false,
+      error: 'That backup is from a newer ShopBook — update this phone first',
+    };
+  }
+
   if (typeof f.tables !== 'object' || f.tables === null) {
     return { ok: false, error: 'That backup has no data in it' };
   }

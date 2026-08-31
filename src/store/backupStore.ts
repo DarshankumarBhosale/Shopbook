@@ -11,8 +11,18 @@ import {
 } from '../lib/backup';
 import { assertOwner, type Role } from '../lib/permissions';
 
-/** Schema version the app currently writes, kept beside the Dexie version. */
-const SCHEMA_VERSION = 6;
+/**
+ * The schema version stamped into a backup, taken from the open database
+ * rather than kept by hand.
+ *
+ * It was a hand-maintained constant and had drifted: it still said 6 after the
+ * database moved to 7. Nothing read it, so nothing broke — but a stale version
+ * stamp is exactly the sort of thing that is only wrong once it starts being
+ * trusted, and restore now checks it.
+ */
+function currentSchemaVersion(): number {
+  return db.verno;
+}
 
 export interface RestoreSummary {
   file: BackupFile;
@@ -102,7 +112,7 @@ export const useBackupStore = create<BackupState>(() => ({
 
   exportBackup: async (deviceLabel) => {
     const tables = await readAllTables();
-    const file = buildBackup(tables, SCHEMA_VERSION, deviceLabel);
+    const file = buildBackup(tables, currentSchemaVersion(), deviceLabel);
     const name = `shopbook-backup-${deviceLabel}-${stamp()}.json`;
 
     const result = await saveAndShare(
@@ -155,7 +165,7 @@ export const useBackupStore = create<BackupState>(() => ({
       throw new Error('That file is not readable — it may be damaged');
     }
 
-    const check = checkBackup(parsed);
+    const check = checkBackup(parsed, currentSchemaVersion());
     if (!check.ok) throw new Error(check.error);
 
     const { file } = check;

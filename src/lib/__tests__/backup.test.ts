@@ -165,3 +165,31 @@ describe('CSV export', () => {
     expect(csv).toContain('"onions, oil"');
   });
 });
+
+describe('a backup from a newer version of the app', () => {
+  const tables = { sales: [], expenses: [], dayBook: [] } as never;
+
+  it('is refused, so it cannot write rows this app does not understand', () => {
+    // Realistic: the handbook says to restore onto a new phone, and the other
+    // phone may still be on an older build.
+    const newer = buildBackup(tables, 9, 'owner');
+    const check = checkBackup(JSON.parse(JSON.stringify(newer)), 7);
+    expect(check.ok).toBe(false);
+    if (!check.ok) expect(check.error).toMatch(/update this phone/i);
+  });
+
+  it('accepts one from the same version', () => {
+    const same = buildBackup(tables, 7, 'owner');
+    expect(checkBackup(JSON.parse(JSON.stringify(same)), 7).ok).toBe(true);
+  });
+
+  it('accepts an older one, which the app can still read', () => {
+    const older = buildBackup(tables, 5, 'owner');
+    expect(checkBackup(JSON.parse(JSON.stringify(older)), 7).ok).toBe(true);
+  });
+
+  it('still works when no version is supplied, for callers that have none', () => {
+    const any = buildBackup(tables, 99, 'owner');
+    expect(checkBackup(JSON.parse(JSON.stringify(any))).ok).toBe(true);
+  });
+});

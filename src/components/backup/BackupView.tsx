@@ -49,7 +49,7 @@ export const BackupView: React.FC = () => {
 
     try {
       const json = await file.text();
-      const check = checkBackup(JSON.parse(json));
+      const check = checkBackup(JSON.parse(json), db.verno);
       if (!check.ok) {
         showToast(check.error);
         return;
