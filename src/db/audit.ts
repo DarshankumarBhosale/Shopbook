@@ -1,4 +1,5 @@
 import { db } from './schema';
+import { nextId } from './ids';
 import type { AuditLogEntry } from './types';
 import type { Role } from '../lib/permissions';
 
@@ -31,5 +32,5 @@ export async function recordAudit(entry: {
     createdAt: new Date().toISOString(),
   };
 
-  await db.auditLog.add(row as AuditLogEntry);
+  await db.auditLog.add({ ...row, id: await nextId(db.auditLog) } as AuditLogEntry);
 }

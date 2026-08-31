@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
+import { nextId } from '../db/ids';
 import { recordAudit } from '../db/audit';
 import type { DayBook } from '../db/types';
 import { toPaise, formatRupees } from '../lib/format';
@@ -48,7 +49,7 @@ export const useDayStore = create<DayState>((set, get) => ({
       status: 'open',
     };
 
-    const id = await db.dayBook.add(newDay as DayBook);
+    const id = await db.dayBook.add({ ...newDay, id: await nextId(db.dayBook) } as DayBook);
     const created = await db.dayBook.get(id);
     if (!created) throw new Error('Failed to retrieve created day book');
 

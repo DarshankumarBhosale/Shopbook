@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
+import { nextId, withIds } from '../db/ids';
 import { recordAudit } from '../db/audit';
 import type { PaymentMode, Sale, SaleLine, StockMove } from '../db/types';
 import { computeStockMoves } from '../lib/stockMoves';
@@ -112,7 +113,7 @@ export const useSaleStore = create<SaleState>((set, get) => ({
       'rw',
       [db.sales, db.saleLines, db.stockMoves, db.auditLog],
       async () => {
-        const saleId = await db.sales.add(saleRecord as Sale);
+        const saleId = await db.sales.add({ ...saleRecord, id: await nextId(db.sales) } as Sale);
 
         const saleLinesRecords: SaleLine[] = linesData.map((l) => ({
           saleId,
@@ -122,8 +123,8 @@ export const useSaleStore = create<SaleState>((set, get) => ({
           amount: l.amount,
         }));
 
-        await db.saleLines.bulkAdd(saleLinesRecords);
-        await db.stockMoves.bulkAdd(stockMovesToInsert as StockMove[]);
+        await db.saleLines.bulkAdd(await withIds(db.saleLines, saleLinesRecords));
+        await db.stockMoves.bulkAdd(await withIds(db.stockMoves, stockMovesToInsert as StockMove[]));
 
         await recordAudit({
           action: 'sale.create',
@@ -187,7 +188,7 @@ export const useSaleStore = create<SaleState>((set, get) => ({
           reversalReason: trimmedReason,
         };
 
-        const reversalId = await db.sales.add(reversal as Sale);
+        const reversalId = await db.sales.add({ ...reversal, id: await nextId(db.sales) } as Sale);
 
         const originalLines = await db.saleLines
           .where('saleId')
@@ -195,13 +196,16 @@ export const useSaleStore = create<SaleState>((set, get) => ({
           .toArray();
 
         await db.saleLines.bulkAdd(
-          originalLines.map((l) => ({
-            saleId: reversalId,
-            itemId: l.itemId,
-            qty: -l.qty,
-            rate: l.rate,
-            amount: -l.amount,
-          }))
+          await withIds(
+            db.saleLines,
+            originalLines.map((l) => ({
+              saleId: reversalId,
+              itemId: l.itemId,
+              qty: -l.qty,
+              rate: l.rate,
+              amount: -l.amount,
+            }))
+          )
         );
 
         // Put the ingredients back on the shelf.
@@ -213,14 +217,17 @@ export const useSaleStore = create<SaleState>((set, get) => ({
 
         if (originalMoves.length > 0) {
           await db.stockMoves.bulkAdd(
-            originalMoves.map((m) => ({
-              dayId: m.dayId,
-              rmId: m.rmId,
-              type: 'reversal' as const,
-              qty: -m.qty,
-              reason: `Reversal of sale #${saleId}`,
-              createdAt: now,
-            })) as StockMove[]
+            await withIds(
+              db.stockMoves,
+              originalMoves.map((m) => ({
+                dayId: m.dayId,
+                rmId: m.rmId,
+                type: 'reversal' as const,
+                qty: -m.qty,
+                reason: `Reversal of sale #${saleId}`,
+                createdAt: now,
+              })) as StockMove[]
+            )
           );
         }
 

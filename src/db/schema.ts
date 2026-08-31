@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import type {
   Shop, User, DayBook, Item, RawMaterial, Recipe,
   Sale, SaleLine, StockMove, Purchase, Expense,
-  Customer, Supplier, Payout, AuditLogEntry, Payment,
+  Customer, Supplier, Payout, AuditLogEntry, Payment, MetaEntry,
 } from './types';
 
 export class ShopBookDB extends Dexie {
@@ -22,6 +22,7 @@ export class ShopBookDB extends Dexie {
   payouts!: Table<Payout, number>;
   auditLog!: Table<AuditLogEntry, number>;
   payments!: Table<Payment, number>;
+  meta!: Table<MetaEntry, string>;
 
   constructor() {
     super('shopbook');
@@ -119,6 +120,13 @@ export class ShopBookDB extends Dexie {
         tx.table('recipes').clear(),
         tx.table('rawMaterials').clear(),
       ]);
+    });
+
+    // v7 adds a small key-value table for settings that belong to this phone
+    // rather than to the shop — which device this is, and how far sync has got.
+    // It is deliberately never synced.
+    this.version(7).stores({
+      meta: 'key',
     });
   }
 }

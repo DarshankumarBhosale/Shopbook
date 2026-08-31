@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
+import { nextId } from '../db/ids';
 import { recordAudit } from '../db/audit';
 import type { Item, RawMaterial, Recipe } from '../db/types';
 import { assertOwner, type Role } from '../lib/permissions';
@@ -113,6 +114,7 @@ export const useItemStore = create<ItemState>(() => ({
         const nextSort = all.reduce((max, i) => Math.max(max, i.sortOrder ?? 0), 0) + 1;
 
         newItemId = await db.items.add({
+          id: await nextId(db.items),
           name: trimmed,
           category: category.trim() || 'Other',
           sellPriceCounter: counterPaise,
@@ -124,6 +126,7 @@ export const useItemStore = create<ItemState>(() => ({
 
         if (costPaise !== undefined) {
           const rmId = await db.rawMaterials.add({
+            id: await nextId(db.rawMaterials),
             name: trimmed,
             unit: 'pc',
             category: 'Resale',
@@ -133,6 +136,7 @@ export const useItemStore = create<ItemState>(() => ({
           } as RawMaterial);
 
           await db.recipes.add({
+            id: await nextId(db.recipes),
             itemId: newItemId,
             rawMaterialId: rmId,
             qtyPerUnit: 1,

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
+import { nextId } from '../db/ids';
 import { recordAudit as logAudit } from '../db/audit';
 import { computeWeightedAvgCost } from '../lib/stockMoves';
 import type { StockMove, Expense, RawMaterial } from '../db/types';
@@ -54,6 +55,7 @@ export const useStockStore = create<StockState>(() => ({
       [db.stockMoves, db.rawMaterials, db.expenses, db.auditLog],
       async () => {
         await db.stockMoves.add({
+          id: await nextId(db.stockMoves),
           dayId,
           rmId,
           type: 'in',
@@ -75,6 +77,7 @@ export const useStockStore = create<StockState>(() => ({
           });
 
           await db.expenses.add({
+            id: await nextId(db.expenses),
             dayId,
             category: 'Raw material',
             amount: Math.round(qty * ratePaise),
@@ -99,6 +102,7 @@ export const useStockStore = create<StockState>(() => ({
       const rm = await db.rawMaterials.get(rmId);
 
       await db.stockMoves.add({
+        id: await nextId(db.stockMoves),
         dayId,
         rmId,
         type: 'wastage',
@@ -128,6 +132,7 @@ export const useStockStore = create<StockState>(() => ({
       if (clash) throw new Error(`${trimmed} is already in the kitchen list`);
 
       rmId = await db.rawMaterials.add({
+        id: await nextId(db.rawMaterials),
         name: trimmed,
         unit: unit.trim() || 'pc',
         category: category.trim() || 'Other',
@@ -174,6 +179,7 @@ export const useStockStore = create<StockState>(() => ({
       const rm = await db.rawMaterials.get(rmId);
 
       await db.stockMoves.add({
+        id: await nextId(db.stockMoves),
         dayId,
         rmId,
         type: 'audit',

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/schema';
+import { nextId } from '../db/ids';
 import type { Payment, PaymentMode, Customer } from '../db/types';
 import { toPaise, formatRupees } from '../lib/format';
 import { recordAudit } from '../db/audit';
@@ -20,7 +21,7 @@ export const useKhataStore = create<KhataState>(() => ({
   addCustomer: async (name, phone = '') => {
     const trimmed = name.trim();
     if (trimmed === '') throw new Error('Customer needs a name');
-    return await db.customers.add({ name: trimmed, phone: phone.trim() } as Customer);
+    return await db.customers.add({ id: await nextId(db.customers), name: trimmed, phone: phone.trim() } as Customer);
   },
 
   setPhone: async (customerId, phone) => {
@@ -43,7 +44,7 @@ export const useKhataStore = create<KhataState>(() => ({
     let id = 0;
     await db.transaction('rw', [db.payments, db.customers, db.auditLog], async () => {
       const who = await db.customers.get(customerId);
-      id = await db.payments.add(record as Payment);
+      id = await db.payments.add({ ...record, id: await nextId(db.payments) } as Payment);
       await recordAudit({
         action: 'khata.receive',
         detail: `${formatRupees(amount)} from ${who?.name ?? `#${customerId}`} · ${paymentMode}`,

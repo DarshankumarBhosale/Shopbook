@@ -201,3 +201,13 @@ export interface CartItem {
   rate: number; // paise per unit
   amount: number; // paise
 }
+
+/**
+ * A setting belonging to this phone rather than to the shop — which device it
+ * is, how far sync has got. Never synced: copying it between devices would give
+ * both phones the same identity and let their IDs collide.
+ */
+export interface MetaEntry {
+  key: string;
+  value: string;
+}
