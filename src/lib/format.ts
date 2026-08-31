@@ -8,14 +8,20 @@
  */
 export function formatRupees(paise: number): string {
   const rupees = Math.round((paise || 0) / 100);
-  return '₹' + rupees.toLocaleString('en-IN');
+  // The sign goes before the symbol. A loss used to print as "₹-396", which
+  // reads as a stray character rather than a negative amount — and net profit
+  // is the one figure on the screen most worth reading correctly.
+  const sign = rupees < 0 ? '-' : '';
+  return sign + '₹' + Math.abs(rupees).toLocaleString('en-IN');
 }
 
 /**
  * Formats a raw rupee value directly (e.g. for display): e.g. 20 -> "₹20"
  */
 export function formatRupeesRaw(rupees: number): string {
-  return '₹' + Math.round(rupees || 0).toLocaleString('en-IN');
+  const whole = Math.round(rupees || 0);
+  const sign = whole < 0 ? '-' : '';
+  return sign + '₹' + Math.abs(whole).toLocaleString('en-IN');
 }
 
 /**
