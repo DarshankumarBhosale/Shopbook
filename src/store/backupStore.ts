@@ -166,7 +166,10 @@ export const useBackupStore = create<BackupState>(() => ({
       [
         db.shops, db.users, db.dayBook, db.items, db.rawMaterials, db.recipes,
         db.sales, db.saleLines, db.stockMoves, db.expenses, db.customers,
-        db.payments, db.auditLog,
+        // `meta` is listed because the audit entry allocates an ID, which reads
+        // this phone's device number. Its own rows are never restored — the
+        // device identity belongs to the phone, not to the backup.
+        db.payments, db.auditLog, db.meta,
       ],
       async () => {
         for (const name of BACKUP_TABLE_NAMES) {

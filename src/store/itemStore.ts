@@ -36,9 +36,16 @@ async function updatePrice(
   label: string
 ) {
   assertOwner(role, 'editMenu');
-  if (pricePaise < 0) throw new Error('Price cannot be negative');
 
-  await db.transaction('rw', [db.items, db.auditLog], async () => {
+  // Zero used to be accepted, and it is the easy slip: clear the field, save,
+  // and every later sale of that item rings up free while still eating its
+  // ingredients — a pure loss that stays invisible until the month's profit
+  // looks wrong. Taking something off sale is what the On/Off switch is for.
+  if (pricePaise <= 0) {
+    throw new Error('A price has to be more than zero — use On/Off to stop selling it');
+  }
+
+  await db.transaction('rw', [db.items, db.auditLog, db.meta], async () => {
     const before = await db.items.get(itemId);
     if (!before) throw new Error('That item no longer exists');
 
@@ -61,7 +68,7 @@ export const useItemStore = create<ItemState>(() => ({
   setActive: async (itemId, isActive, role) => {
     assertOwner(role, 'editMenu');
 
-    await db.transaction('rw', [db.items, db.auditLog], async () => {
+    await db.transaction('rw', [db.items, db.auditLog, db.meta], async () => {
       const before = await db.items.get(itemId);
       if (!before) throw new Error('That item no longer exists');
 
@@ -80,7 +87,7 @@ export const useItemStore = create<ItemState>(() => ({
     assertOwner(role, 'editMenu');
     if (!a.id || !b.id) return;
 
-    await db.transaction('rw', [db.items, db.auditLog], async () => {
+    await db.transaction('rw', [db.items, db.auditLog, db.meta], async () => {
       await db.items.update(a.id!, { sortOrder: b.sortOrder });
       await db.items.update(b.id!, { sortOrder: a.sortOrder });
       await recordAudit({
@@ -102,7 +109,7 @@ export const useItemStore = create<ItemState>(() => ({
 
     await db.transaction(
       'rw',
-      [db.items, db.rawMaterials, db.recipes, db.auditLog],
+      [db.items, db.rawMaterials, db.recipes, db.auditLog, db.meta],
       async () => {
         const clash = await db.items
           .filter((i) => i.name.toLowerCase() === trimmed.toLowerCase() && !i.isArchived)
@@ -164,7 +171,7 @@ export const useItemStore = create<ItemState>(() => ({
   setArchived: async (itemId, isArchived, role) => {
     assertOwner(role, 'editMenu');
 
-    await db.transaction('rw', [db.items, db.auditLog], async () => {
+    await db.transaction('rw', [db.items, db.auditLog, db.meta], async () => {
       const before = await db.items.get(itemId);
       if (!before) throw new Error('That item no longer exists');
 

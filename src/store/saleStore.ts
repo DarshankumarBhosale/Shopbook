@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '../db/schema';
 import { nextId, withIds } from '../db/ids';
 import { recordAudit } from '../db/audit';
+import { assertDayOpen } from '../db/dayGuard';
 import type { PaymentMode, Sale, SaleLine, StockMove } from '../db/types';
 import { computeStockMoves } from '../lib/stockMoves';
 import { computeSaleCOGS } from '../lib/cogs';
@@ -111,8 +112,12 @@ export const useSaleStore = create<SaleState>((set, get) => ({
     // Commit atomically in Dexie
     await db.transaction(
       'rw',
-      [db.sales, db.saleLines, db.stockMoves, db.auditLog],
+      [db.sales, db.saleLines, db.stockMoves, db.dayBook, db.auditLog, db.meta],
       async () => {
+        // Checked in here, not before, so the day cannot close underneath us
+        // between the check and the write.
+        await assertDayOpen(dayId);
+
         const saleId = await db.sales.add({ ...saleRecord, id: await nextId(db.sales) } as Sale);
 
         const saleLinesRecords: SaleLine[] = linesData.map((l) => ({
@@ -152,7 +157,7 @@ export const useSaleStore = create<SaleState>((set, get) => ({
 
     await db.transaction(
       'rw',
-      [db.sales, db.saleLines, db.stockMoves, db.dayBook, db.auditLog],
+      [db.sales, db.saleLines, db.stockMoves, db.dayBook, db.auditLog, db.meta],
       async () => {
         const original = await db.sales.get(saleId);
         if (!original) throw new Error('That sale no longer exists');
@@ -166,10 +171,7 @@ export const useSaleStore = create<SaleState>((set, get) => ({
         if (already) throw new Error('That sale is already reversed');
 
         // A closed day is immutable (rule 4) — reopen it first.
-        const day = await db.dayBook.get(original.dayId);
-        if (!day || day.status !== 'open') {
-          throw new Error('That day is locked — reopen it first');
-        }
+        await assertDayOpen(original.dayId);
 
         const now = new Date().toISOString();
 

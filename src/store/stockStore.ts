@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '../db/schema';
 import { nextId } from '../db/ids';
 import { recordAudit as logAudit } from '../db/audit';
+import { assertDayOpenIfGiven } from '../db/dayGuard';
 import { computeWeightedAvgCost } from '../lib/stockMoves';
 import type { StockMove, Expense, RawMaterial } from '../db/types';
 
@@ -52,8 +53,9 @@ export const useStockStore = create<StockState>(() => ({
 
     await db.transaction(
       'rw',
-      [db.stockMoves, db.rawMaterials, db.expenses, db.auditLog],
+      [db.stockMoves, db.rawMaterials, db.expenses, db.dayBook, db.auditLog, db.meta],
       async () => {
+        await assertDayOpenIfGiven(dayId);
         await db.stockMoves.add({
           id: await nextId(db.stockMoves),
           dayId,
@@ -98,7 +100,8 @@ export const useStockStore = create<StockState>(() => ({
   recordWastage: async ({ dayId, rmId, qty, reason }) => {
     if (qty <= 0) throw new Error('Quantity must be greater than zero');
 
-    await db.transaction('rw', [db.stockMoves, db.rawMaterials, db.auditLog], async () => {
+    await db.transaction('rw', [db.stockMoves, db.rawMaterials, db.dayBook, db.auditLog, db.meta], async () => {
+      await assertDayOpenIfGiven(dayId);
       const rm = await db.rawMaterials.get(rmId);
 
       await db.stockMoves.add({
@@ -125,7 +128,7 @@ export const useStockStore = create<StockState>(() => ({
     if (costPaise < 0) throw new Error('Cost cannot be negative');
 
     let rmId = 0;
-    await db.transaction('rw', [db.rawMaterials, db.auditLog], async () => {
+    await db.transaction('rw', [db.rawMaterials, db.auditLog, db.meta], async () => {
       const clash = await db.rawMaterials
         .filter((r) => r.name.toLowerCase() === trimmed.toLowerCase() && !r.isArchived)
         .first();
@@ -155,7 +158,7 @@ export const useStockStore = create<StockState>(() => ({
    * stay, so past sales and counts still add up.
    */
   setRawMaterialArchived: async (rmId, isArchived) => {
-    await db.transaction('rw', [db.rawMaterials, db.auditLog], async () => {
+    await db.transaction('rw', [db.rawMaterials, db.auditLog, db.meta], async () => {
       const before = await db.rawMaterials.get(rmId);
       if (!before) throw new Error('That material no longer exists');
 
@@ -175,7 +178,8 @@ export const useStockStore = create<StockState>(() => ({
     const delta = countedQty - currentQty;
     if (delta === 0) return;
 
-    await db.transaction('rw', [db.stockMoves, db.rawMaterials, db.auditLog], async () => {
+    await db.transaction('rw', [db.stockMoves, db.rawMaterials, db.dayBook, db.auditLog, db.meta], async () => {
+      await assertDayOpenIfGiven(dayId);
       const rm = await db.rawMaterials.get(rmId);
 
       await db.stockMoves.add({

@@ -5,6 +5,7 @@ import type { Expense, PaymentMode } from '../db/types';
 import { toPaise, formatRupees } from '../lib/format';
 import { recordAudit } from '../db/audit';
 import { assertOwner, type Role } from '../lib/permissions';
+import { assertDayOpen } from '../db/dayGuard';
 
 export const EXPENSE_CATEGORIES = [
   'Raw material',
@@ -39,14 +40,6 @@ interface ExpenseState {
   restoreExpense: (expenseId: number, role: Role | null) => Promise<void>;
 }
 
-/** A closed day is immutable — its expenses are part of a locked cash count. */
-async function assertDayOpen(dayId: number): Promise<void> {
-  const day = await db.dayBook.get(dayId);
-  if (!day || day.status !== 'open') {
-    throw new Error('That day is locked — reopen it first');
-  }
-}
-
 export const useExpenseStore = create<ExpenseState>(() => ({
   addExpense: async ({ dayId, category, amountRupees, paymentMode, note }) => {
     const amountPaise = toPaise(amountRupees);
@@ -61,7 +54,8 @@ export const useExpenseStore = create<ExpenseState>(() => ({
     };
 
     let id = 0;
-    await db.transaction('rw', [db.expenses, db.auditLog], async () => {
+    await db.transaction('rw', [db.expenses, db.dayBook, db.auditLog, db.meta], async () => {
+      await assertDayOpen(dayId);
       id = await db.expenses.add({ ...expenseRecord, id: await nextId(db.expenses) } as Expense);
       await recordAudit({
         action: 'expense.create',
@@ -79,7 +73,7 @@ export const useExpenseStore = create<ExpenseState>(() => ({
     const amountPaise = toPaise(amountRupees);
     if (amountPaise <= 0) throw new Error('Expense amount must be greater than zero');
 
-    await db.transaction('rw', [db.expenses, db.dayBook, db.auditLog], async () => {
+    await db.transaction('rw', [db.expenses, db.dayBook, db.auditLog, db.meta], async () => {
       const before = await db.expenses.get(expenseId);
       if (!before) throw new Error('That expense no longer exists');
       await assertDayOpen(before.dayId);
@@ -109,7 +103,7 @@ export const useExpenseStore = create<ExpenseState>(() => ({
   deleteExpense: async (expenseId, role) => {
     assertOwner(role, 'editExpense');
 
-    await db.transaction('rw', [db.expenses, db.dayBook, db.auditLog], async () => {
+    await db.transaction('rw', [db.expenses, db.dayBook, db.auditLog, db.meta], async () => {
       const before = await db.expenses.get(expenseId);
       if (!before) throw new Error('That expense no longer exists');
       await assertDayOpen(before.dayId);
@@ -127,7 +121,7 @@ export const useExpenseStore = create<ExpenseState>(() => ({
   restoreExpense: async (expenseId, role) => {
     assertOwner(role, 'editExpense');
 
-    await db.transaction('rw', [db.expenses, db.dayBook, db.auditLog], async () => {
+    await db.transaction('rw', [db.expenses, db.dayBook, db.auditLog, db.meta], async () => {
       const before = await db.expenses.get(expenseId);
       if (!before) throw new Error('That expense no longer exists');
       await assertDayOpen(before.dayId);

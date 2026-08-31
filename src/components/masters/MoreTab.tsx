@@ -113,7 +113,9 @@ export const MoreTab: React.FC = () => {
       showToast(`${name} · ${formatRupees(paise)}`);
     } catch (err) {
       console.error('Failed to update price:', err);
-      showToast('Could not save that price');
+      // Say what was actually wrong — "could not save" leaves the owner
+      // retyping the same rejected number.
+      showToast(err instanceof Error ? err.message : 'Could not save that price');
     }
   };
 

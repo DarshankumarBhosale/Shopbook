@@ -30,7 +30,20 @@ const LABEL_KEY = 'deviceLabel';
 
 let cachedDeviceNo: number | null = null;
 
-/** Which phone this is. Defaults to 1 until sync setup assigns one. */
+/**
+ * Which phone this is. Defaults to 1 until sync setup assigns one.
+ *
+ * `nextId()` calls this from inside write transactions, so every transaction
+ * that allocates an ID must list `meta` among its tables. It reads from the
+ * cache after the first time, but the first write after launch genuinely does
+ * touch the table, and Dexie refuses a table the transaction did not declare.
+ *
+ * Getting this wrong threw NotFoundError on that first write, and because the
+ * failed read left the cache empty it threw on every write afterwards: a
+ * freshly opened app could not record a single sale. Escaping the transaction
+ * to read it is not the answer either — the parent transaction commits while
+ * the detached read is awaited, and the write fails as inactive instead.
+ */
 export async function getDeviceNo(): Promise<number> {
   if (cachedDeviceNo !== null) return cachedDeviceNo;
   const row = await db.meta.get(DEVICE_KEY);

@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import 'fake-indexeddb/auto';
 import { parsePriceRupees, suggestOnlinePrice } from '../pricing';
+import { db } from '../../db/schema';
+import { seedDatabaseIfEmpty } from '../../db/seed';
+import { resetDeviceCache } from '../../db/ids';
+import { useItemStore } from '../../store/itemStore';
 
 describe('parsePriceRupees', () => {
   it('converts whole rupees to paise', () => {
@@ -36,5 +41,42 @@ describe('suggestOnlinePrice', () => {
   it('returns 0 for a zero or negative counter price', () => {
     expect(suggestOnlinePrice(0)).toBe(0);
     expect(suggestOnlinePrice(-100)).toBe(0);
+  });
+});
+
+describe('the store refuses a free price', () => {
+  beforeEach(async () => {
+    await db.delete();
+    await db.open();
+    resetDeviceCache();
+    await seedDatabaseIfEmpty();
+  });
+
+  it('rejects zero, which used to be accepted', async () => {
+    // Clearing the field and saving left the item ringing up free while still
+    // consuming its ingredients — a loss nobody sees until the month is short.
+    await expect(
+      useItemStore.getState().setCounterPrice(11, 0, 'owner')
+    ).rejects.toThrow(/more than zero/i);
+
+    const item = await db.items.get(11);
+    expect(item?.sellPriceCounter).toBeGreaterThan(0);
+  });
+
+  it('rejects a negative price too', async () => {
+    await expect(
+      useItemStore.getState().setCounterPrice(11, -500, 'owner')
+    ).rejects.toThrow();
+  });
+
+  it('points at the On/Off switch, which is the real way to stop selling', async () => {
+    await expect(
+      useItemStore.getState().setCounterPrice(11, 0, 'owner')
+    ).rejects.toThrow(/On\/Off/);
+  });
+
+  it('still accepts an ordinary price', async () => {
+    await useItemStore.getState().setCounterPrice(11, 2000, 'owner');
+    expect((await db.items.get(11))?.sellPriceCounter).toBe(2000);
   });
 });

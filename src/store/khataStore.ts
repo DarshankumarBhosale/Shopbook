@@ -4,6 +4,7 @@ import { nextId } from '../db/ids';
 import type { Payment, PaymentMode, Customer } from '../db/types';
 import { toPaise, formatRupees } from '../lib/format';
 import { recordAudit } from '../db/audit';
+import { assertDayOpen } from '../db/dayGuard';
 
 interface KhataState {
   addCustomer: (name: string, phone?: string) => Promise<number>;
@@ -42,7 +43,8 @@ export const useKhataStore = create<KhataState>(() => ({
     };
 
     let id = 0;
-    await db.transaction('rw', [db.payments, db.customers, db.auditLog], async () => {
+    await db.transaction('rw', [db.payments, db.customers, db.dayBook, db.auditLog, db.meta], async () => {
+      await assertDayOpen(dayId);
       const who = await db.customers.get(customerId);
       id = await db.payments.add({ ...record, id: await nextId(db.payments) } as Payment);
       await recordAudit({

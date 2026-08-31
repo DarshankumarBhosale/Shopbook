@@ -91,7 +91,7 @@ export const useDayStore = create<DayState>((set, get) => ({
       totalExpenses: snapshot.expensesPaise,
     };
 
-    await db.transaction('rw', [db.dayBook, db.auditLog], async () => {
+    await db.transaction('rw', [db.dayBook, db.auditLog, db.meta], async () => {
       await db.dayBook.update(current.id!, updatePayload);
       await recordAudit({
         action: 'day.close',
@@ -118,7 +118,7 @@ export const useDayStore = create<DayState>((set, get) => ({
   reopenDay: async (dayId: number, role: Role | null) => {
     assertOwner(role, 'reopenDay');
 
-    await db.transaction('rw', [db.dayBook, db.auditLog], async () => {
+    await db.transaction('rw', [db.dayBook, db.auditLog, db.meta], async () => {
       const day = await db.dayBook.get(dayId);
       if (!day) throw new Error('That day book no longer exists');
       if (day.status === 'open') return;
