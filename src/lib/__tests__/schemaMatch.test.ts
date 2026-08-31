@@ -113,9 +113,33 @@ describe('the cloud schema matches the app types', () => {
   it('turns on row level security for every synced table', () => {
     // Missed off this list, a table is readable and writable by anyone holding
     // the publishable key — which ships inside the app.
-    const secured = loopArray('enable row level security');
+    const secured = loopArray('enrolled devices only');
     for (const table of SYNC_TABLES) {
       expect(secured, `${table} is left without row level security`).toContain(table);
+    }
+  });
+
+  it('grants access to enrolled devices, not to anyone who signs up', () => {
+    // Supabase allows public sign-up by default, and this project's URL and
+    // publishable key both sit in a public repository. A policy of "any
+    // signed-in user" therefore means anyone at all who signs up and confirms
+    // their own email can read and write the shop's books.
+    const loopBlock = sql.split('do $$').find((b) => b.includes('enrolled devices only')) ?? '';
+
+    expect(loopBlock, 'the shop tables are open to any signed-in user')
+      .not.toMatch(/for all to authenticated\s+using \(true\)/);
+    expect(loopBlock).toMatch(/appUsers/);
+    expect(loopBlock).toMatch(/auth\.uid\(\)/);
+  });
+
+  it('keeps the allow-list unwritable through the API', () => {
+    // A device that could add itself to the list would make the list pointless.
+    const block = sql.slice(sql.indexOf('create table if not exists "appUsers"'));
+    const policies = [...block.matchAll(/create policy "([^"]+)" on "appUsers"\s+for (\w+)/g)];
+
+    expect(policies.length, 'no policy found on the allow-list').toBeGreaterThan(0);
+    for (const [, name, action] of policies) {
+      expect(action, `policy "${name}" lets a device change the allow-list`).toBe('select');
     }
   });
 

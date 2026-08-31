@@ -171,8 +171,13 @@ create index if not exists audit_log_updated_idx   on "auditLog" ("updatedAt");
 -- `updatedAt` has to be set by the database, not the client: two phones with
 -- clocks a few minutes apart would otherwise resolve conflicts by whose clock
 -- was fastest rather than by what actually happened last.
+-- `search_path` is pinned. Without it the function resolves names against
+-- whatever search path the caller happens to have, which is the standard
+-- warning Supabase's own linter raises against a function like this.
 create or replace function touch_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = pg_catalog, public
+as $$
 begin
   new."updatedAt" = now();
   return new;
@@ -195,9 +200,32 @@ begin
   end loop;
 end $$;
 
+-- ──────────────────── who is allowed in ────────────────────
+-- Being signed in is not enough on its own.
+--
+-- Supabase projects allow public sign-up by default, and this project's URL
+-- sits in a public repository alongside the publishable key. "Any signed-in
+-- user" would therefore mean: anyone at all who signs up and confirms their
+-- own email gets full read and write over the shop's books.
+--
+-- So access is an explicit list of enrolled devices. A stranger who signs up
+-- gets an account and nothing else.
+create table if not exists "appUsers" (
+  id          uuid primary key,   -- matches auth.users.id
+  label       text not null,
+  "updatedAt" timestamptz not null default now()
+);
+
+alter table "appUsers" enable row level security;
+
+-- Readable so a phone can tell whether it is enrolled; there is deliberately
+-- no insert, update or delete policy, so it cannot be changed through the API
+-- at all — only from the dashboard or a migration.
+drop policy if exists "enrolled can read the list" on "appUsers";
+create policy "enrolled can read the list" on "appUsers"
+  for select to authenticated using (true);
+
 -- ──────────────────── row level security ────────────────────
--- Signed-in users only. Without a session the publishable key reads nothing
--- and writes nothing.
 do $$
 declare t text;
 begin
@@ -207,9 +235,12 @@ begin
   ] loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "signed in full access" on %I', t);
+    execute format('drop policy if exists "enrolled devices only" on %I', t);
     execute format(
-      'create policy "signed in full access" on %I
-       for all to authenticated using (true) with check (true)', t);
+      'create policy "enrolled devices only" on %I
+       for all to authenticated
+       using      (exists (select 1 from "appUsers" u where u.id = auth.uid()))
+       with check (exists (select 1 from "appUsers" u where u.id = auth.uid()))', t);
   end loop;
 end $$;
 
