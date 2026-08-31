@@ -150,7 +150,21 @@ export const CloseDay: React.FC = () => {
 
         <div className="border-t border-line mt-2 pt-2 flex items-baseline justify-between">
           <span className="text-body-m font-semibold text-tx1">Drawer should hold</span>
-          <span className="font-mono text-mono-l font-bold text-accent-text">
+          {/*
+            A negative figure here means more cash was paid out than came in,
+            which can only be a mis-entered expense — the drawer cannot hold
+            less than nothing. Showing it in the money-in colour reassured the
+            owner at exactly the moment they needed to look twice.
+          */}
+          <span
+            className="font-mono text-mono-l font-bold"
+            style={{
+              color:
+                expectedCashPaise < 0
+                  ? 'var(--color-danger-text)'
+                  : 'var(--color-accent-text)',
+            }}
+          >
             {formatRupees(expectedCashPaise)}
           </span>
         </div>

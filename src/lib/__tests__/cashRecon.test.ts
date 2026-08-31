@@ -49,3 +49,19 @@ describe('cashRecon pure functions', () => {
     expect(isReconciliationValid('-50', 164000, 'note')).toBe(false);
   });
 });
+
+describe('a drawer that should hold less than nothing', () => {
+  it('can arise only from a mis-entered expense', () => {
+    // Opening 500 + cash sales 610 + khata 200 - expenses 1430 = -120.
+    // You cannot physically pay out cash you never had, so a negative here is
+    // always an entry error — and it is shown in the alert colour rather than
+    // the money-in colour, which used to reassure at exactly the wrong moment.
+    const expected = computeExpectedCash(50000, 61000, 143000, 20000);
+    expect(expected).toBe(-12000);
+    expect(expected < 0).toBe(true);
+  });
+
+  it('stays positive on an ordinary day', () => {
+    expect(computeExpectedCash(50000, 324000, 143000, 20000)).toBe(251000);
+  });
+});
