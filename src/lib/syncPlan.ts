@@ -98,10 +98,19 @@ export type MergeDecision = 'take-remote' | 'keep-local';
 export function mergeDecision(
   table: SyncTable,
   local: { updatedAt?: string } | undefined,
-  remote: { updatedAt?: string }
+  remote: { updatedAt?: string },
+  localHasUnsentEdit = false
 ): MergeDecision {
   if (!local) return 'take-remote';
   if (isAppendOnly(table)) return 'keep-local';
+
+  // A local row carries no `updatedAt` — it is stripped before storing — so
+  // there is nothing to compare and remote would otherwise always win. An edit
+  // this device has not managed to send yet has to survive: push runs before
+  // pull, so the only way to be here is that the push failed, and reverting the
+  // shopkeeper's correction because the signal dropped is not acceptable. It
+  // goes up on the next sync.
+  if (localHasUnsentEdit) return 'keep-local';
 
   const localAt = local.updatedAt ?? '';
   const remoteAt = remote.updatedAt ?? '';
@@ -116,7 +125,9 @@ export function mergeDecision(
 export function planMerge<T extends Row & { updatedAt?: string }>(
   table: SyncTable,
   remoteRows: T[],
-  localById: Map<number, { updatedAt?: string }>
+  localById: Map<number, { updatedAt?: string }>,
+  /** What this device last agreed with the server, to spot unsent local edits. */
+  sent: SentMap = {}
 ): { toWrite: Row[]; skipped: number } {
   const toWrite: Row[] = [];
   let skipped = 0;
@@ -124,7 +135,13 @@ export function planMerge<T extends Row & { updatedAt?: string }>(
   for (const remote of remoteRows) {
     if (typeof remote.id !== 'number') { skipped++; continue; }
 
-    const decision = mergeDecision(table, localById.get(remote.id), remote);
+    const local = localById.get(remote.id);
+    const unsent =
+      local !== undefined &&
+      Object.keys(sent).length > 0 &&
+      sent[String(remote.id)] !== rowFingerprint(local as Row);
+
+    const decision = mergeDecision(table, local, remote, unsent);
     if (decision === 'take-remote') {
       const { updatedAt: _ignored, ...rest } = remote;
       void _ignored;
@@ -138,20 +155,26 @@ export function planMerge<T extends Row & { updatedAt?: string }>(
 }
 
 /**
- * The cursor for the next pull.
+ * The cursor for the next pull: the newest timestamp seen, exactly.
  *
- * Rewound by a second so a row written in the same second as the last one
- * pulled is not skipped. Re-fetching a row is harmless; missing one is not.
+ * This used to rewind a second, meaning to guard against a row written in the
+ * same instant as the last one pulled being skipped. It did that by
+ * re-downloading the most recent second of rows on every single sync, forever —
+ * the counter never once read "up to date", and a phone on a weak connection
+ * paid for the same rows again and again.
+ *
+ * The real hazard it was reaching for is narrower: `now()` is the transaction's
+ * start time, so every row written in one statement shares an identical
+ * timestamp, and a page boundary landing inside that group would skip the rest.
+ * That is handled by paging until a page comes back short, which is where it
+ * belongs — see the pull loop.
  */
 export function nextPullCursor(rows: { updatedAt?: string }[], previous: string): string {
   let newest = previous;
   for (const r of rows) {
     if (r.updatedAt && r.updatedAt > newest) newest = r.updatedAt;
   }
-  if (newest === previous) return previous;
-
-  const t = new Date(newest).getTime();
-  return Number.isFinite(t) ? new Date(t - 1000).toISOString() : previous;
+  return newest;
 }
 
 /**

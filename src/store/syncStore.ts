@@ -167,41 +167,57 @@ export const useSyncStore = create<SyncState>((set, get) => ({
 
       // ── pull ──
       for (const table of SYNC_TABLES) {
-        const cursor = await meta(cursorKey(table), EPOCH);
+        let cursor = await meta(cursorKey(table), EPOCH);
 
-        const { data: remote, error } = await supabase
-          .from(table)
-          .select('*')
-          .gt('updatedAt', cursor)
-          .order('updatedAt', { ascending: true })
-          .limit(PAGE);
+        // Keep paging while pages come back full. `now()` is the transaction's
+        // start time, so a whole batch shares one timestamp; stopping at a full
+        // page could leave part of that group behind the cursor forever.
+        for (;;) {
+          const { data: remote, error } = await supabase
+            .from(table)
+            .select('*')
+            .gt('updatedAt', cursor)
+            .order('updatedAt', { ascending: true })
+            .limit(PAGE);
 
-        if (error) throw new Error(`${table}: ${error.message}`);
-        if (!remote || remote.length === 0) continue;
+          if (error) throw new Error(`${table}: ${error.message}`);
+          if (!remote || remote.length === 0) break;
 
-        const localRows = (await db.table(table).toArray()) as Row[];
-        const localById = new Map<number, { updatedAt?: string }>(
-          localRows.map((r) => [r.id as number, r as { updatedAt?: string }])
-        );
+          const localRows = (await db.table(table).toArray()) as Row[];
+          const localById = new Map<number, { updatedAt?: string }>(
+            localRows.map((r) => [r.id as number, r as { updatedAt?: string }])
+          );
 
-        const { toWrite } = planMerge(table, remote as (Row & { updatedAt?: string })[], localById);
-        if (toWrite.length > 0) {
-          await db.table(table).bulkPut(toWrite);
-          pulled += toWrite.length;
+          const sent = await readSentMap(table);
+          const { toWrite } = planMerge(
+            table,
+            remote as (Row & { updatedAt?: string })[],
+            localById,
+            sent
+          );
 
-          // A row that arrived from the server already matches it, so record it
-          // as sent. This is what stops this device pushing its copy back and
-          // reverting an edit the other phone has since made.
-          await db.meta.put({
-            key: sentKey(table),
-            value: JSON.stringify(updateSentMap(await readSentMap(table), toWrite)),
-          });
+          if (toWrite.length > 0) {
+            await db.table(table).bulkPut(toWrite);
+            pulled += toWrite.length;
+
+            // A row that arrived from the server already matches it, so record
+            // it as sent. This is what stops this device pushing its copy back
+            // and reverting an edit the other phone has since made.
+            await db.meta.put({
+              key: sentKey(table),
+              value: JSON.stringify(updateSentMap(sent, toWrite)),
+            });
+          }
+
+          const advanced = nextPullCursor(remote as { updatedAt?: string }[], cursor);
+          await db.meta.put({ key: cursorKey(table), value: advanced });
+
+          // A full page that did not move the cursor means one timestamp group
+          // is larger than a page. Reading it again would spin, so stop and let
+          // the next sync try — the merge rules make a re-read harmless.
+          if (remote.length < PAGE || advanced === cursor) break;
+          cursor = advanced;
         }
-
-        await db.meta.put({
-          key: cursorKey(table),
-          value: nextPullCursor(remote as { updatedAt?: string }[], cursor),
-        });
       }
 
       const now = new Date().toISOString();

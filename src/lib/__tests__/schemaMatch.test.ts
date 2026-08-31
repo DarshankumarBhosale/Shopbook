@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { SYNC_TABLES } from '../syncPlan';
+// Read as text through Vite rather than node:fs, so the test compiles under the
+// app's own tsconfig instead of needing Node types pulled into it.
+import sql from '../../../supabase/schema.sql?raw';
+import types from '../../db/types?raw';
 
 /**
  * Keeps the cloud schema honest against the app's own types.
@@ -12,9 +14,6 @@ import { SYNC_TABLES } from '../syncPlan';
  * the day's takings sit unsynced until someone reads it. Cheap to catch here.
  */
 
-const root = resolve(__dirname, '../../..');
-const sql = readFileSync(resolve(root, 'supabase/schema.sql'), 'utf8');
-const types = readFileSync(resolve(root, 'src/db/types.ts'), 'utf8');
 
 /** The TypeScript interface backing each synced table. */
 const INTERFACE_FOR: Record<string, string> = {

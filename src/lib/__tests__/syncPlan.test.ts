@@ -82,6 +82,38 @@ describe('who wins a conflict', () => {
     const t = '2026-08-01T10:00:00Z';
     expect(mergeDecision('expenses', { updatedAt: t }, { updatedAt: t })).toBe('keep-local');
   });
+
+  it('keeps an edit this device has not managed to send yet', () => {
+    // A local row carries no updatedAt, so remote would otherwise always win.
+    // Push runs before pull, so being here means the push failed — reverting
+    // the correction because the signal dropped would lose the shopkeeper's work.
+    expect(
+      mergeDecision('expenses', { updatedAt: undefined }, { updatedAt: '2030-01-01' }, true)
+    ).toBe('keep-local');
+  });
+});
+
+describe('an unsent local edit against an incoming row', () => {
+  it('survives a pull that follows a failed push', () => {
+    const edited = { id: 7, amount: 2500, note: 'cylinder' };
+    // The server still holds the pre-edit version.
+    const fromServer = { id: 7, amount: 1000, note: 'gas', updatedAt: '2030-01-01T00:00:00Z' };
+    // The sent map records what was last agreed — the old contents.
+    const sent = updateSentMap({}, [{ id: 7, amount: 1000, note: 'gas' }]);
+
+    const { toWrite } = planMerge('expenses', [fromServer], new Map([[7, edited]]), sent);
+    expect(toWrite, 'an unsent local edit was overwritten by the server copy').toHaveLength(0);
+  });
+
+  it('still takes the remote row when nothing was edited here', () => {
+    const local = { id: 7, amount: 1000, note: 'gas' };
+    const sent = updateSentMap({}, [local]);
+    const fromServer = { id: 7, amount: 3000, note: 'gas', updatedAt: '2030-01-01T00:00:00Z' };
+
+    const { toWrite } = planMerge('expenses', [fromServer], new Map([[7, local]]), sent);
+    expect(toWrite).toHaveLength(1);
+    expect(toWrite[0]).toMatchObject({ amount: 3000 });
+  });
 });
 
 describe('planning a merge', () => {
@@ -119,12 +151,21 @@ describe('planning a merge', () => {
 });
 
 describe('the pull cursor', () => {
-  it('rewinds a second so a row written in the same second is not skipped', () => {
+  it('advances to the newest row seen, exactly', () => {
+    // It used to rewind a second, which re-downloaded the most recent second of
+    // rows on every sync forever — the counter never read "up to date".
     const next = nextPullCursor(
       [{ updatedAt: '2026-08-31T10:00:05.000Z' }],
       '2026-08-31T09:00:00.000Z'
     );
-    expect(next).toBe('2026-08-31T10:00:04.000Z');
+    expect(next).toBe('2026-08-31T10:00:05.000Z');
+  });
+
+  it('settles, so a second sync over the same rows pulls nothing', () => {
+    const rows = [{ updatedAt: '2026-08-31T10:00:05.000Z' }];
+    const first = nextPullCursor(rows, '1970-01-01T00:00:00.000Z');
+    expect(nextPullCursor(rows, first)).toBe(first);
+    expect(rows.every((r) => !(r.updatedAt > first))).toBe(true);
   });
 
   it('holds still when nothing newer arrived', () => {
