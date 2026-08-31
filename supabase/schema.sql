@@ -239,8 +239,8 @@ begin
     execute format(
       'create policy "enrolled devices only" on %I
        for all to authenticated
-       using      (exists (select 1 from "appUsers" u where u.id = auth.uid()))
-       with check (exists (select 1 from "appUsers" u where u.id = auth.uid()))', t);
+       using      (exists (select 1 from "appUsers" u where u.id = (select auth.uid())))
+       with check (exists (select 1 from "appUsers" u where u.id = (select auth.uid())))', t);
   end loop;
 end $$;
 
