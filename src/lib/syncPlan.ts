@@ -125,7 +125,7 @@ export function mergeDecision(
 export function planMerge<T extends Row & { updatedAt?: string }>(
   table: SyncTable,
   remoteRows: T[],
-  localById: Map<number, { updatedAt?: string }>,
+  localById: Map<number, Row & { updatedAt?: string }>,
   /** What this device last agreed with the server, to spot unsent local edits. */
   sent: SentMap = {}
 ): { toWrite: Row[]; skipped: number } {

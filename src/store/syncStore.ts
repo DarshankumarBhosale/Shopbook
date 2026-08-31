@@ -184,9 +184,7 @@ export const useSyncStore = create<SyncState>((set, get) => ({
           if (!remote || remote.length === 0) break;
 
           const localRows = (await db.table(table).toArray()) as Row[];
-          const localById = new Map<number, { updatedAt?: string }>(
-            localRows.map((r) => [r.id as number, r as { updatedAt?: string }])
-          );
+          const localById = new Map(localRows.map((r) => [r.id as number, r]));
 
           const sent = await readSentMap(table);
           const { toWrite } = planMerge(
