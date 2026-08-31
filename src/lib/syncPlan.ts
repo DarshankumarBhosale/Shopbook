@@ -12,9 +12,9 @@ export const APPEND_ONLY_TABLES = [
 
 /**
  * Tables whose rows get edited: prices change, a day closes, an expense is
- * corrected. All are small — a few hundred rows at most — so they are pushed
- * whole rather than tracked with an outbox, which is one less thing to get
- * wrong.
+ * corrected. Which of them to send is decided by comparing contents against
+ * what this device last agreed with the server, rather than by an outbox that
+ * every write site would have to remember to update.
  */
 export const MUTABLE_TABLES = [
   'shops', 'dayBook', 'items', 'rawMaterials', 'recipes', 'expenses', 'customers',
@@ -54,9 +54,13 @@ export function rowsToPush(
   rows: Row[],
   deviceNo: number,
   deviceBlock: number,
-  highWaterMark: number
+  highWaterMark: number,
+  sent?: SentMap
 ): Row[] {
-  if (!isAppendOnly(table)) return rows;
+  // Mutable rows are sent when their contents differ from what this device last
+  // agreed with the server, which is the only way to tell an edit made here
+  // from a copy that merely arrived here.
+  if (!isAppendOnly(table)) return sent ? changedRows(rows, sent) : rows;
 
   const from = deviceNo * deviceBlock;
   const to = from + deviceBlock - 1;
@@ -148,4 +152,82 @@ export function nextPullCursor(rows: { updatedAt?: string }[], previous: string)
 
   const t = new Date(newest).getTime();
   return Number.isFinite(t) ? new Date(t - 1000).toISOString() : previous;
+}
+
+/**
+ * A short, stable fingerprint of a row's contents.
+ *
+ * Keys are sorted so two equal rows hash the same whatever order Dexie happens
+ * to return their properties in.
+ */
+export function rowFingerprint(row: Row): string {
+  const keys = Object.keys(row).filter((k) => k !== 'updatedAt').sort();
+  const canonical = keys.map((k) => `${k}=${JSON.stringify(row[k])}`).join('');
+
+  // djb2, base36. A collision only costs a missed push of a same-shaped edit,
+  // and the next edit re-sends it, so 32 bits is enough here.
+  let hash = 5381;
+  for (let i = 0; i < canonical.length; i++) {
+    hash = (hash * 33 + canonical.charCodeAt(i)) | 0;
+  }
+  return (hash >>> 0).toString(36);
+}
+
+export type SentMap = Record<string, string>;
+
+/**
+ * Which mutable rows this device actually needs to send.
+ *
+ * A row is sent only when its contents differ from what this device last put on
+ * the server — whether by pushing it, or by receiving it in a pull. Without
+ * this, a device would push back its stale copy of a row the other phone had
+ * since edited, stamping it newer and silently reverting that phone's work.
+ * That is a real way to lose an expense correction, so the fingerprint earns
+ * its keep.
+ */
+export function changedRows(rows: Row[], sent: SentMap): Row[] {
+  return rows.filter((row) => {
+    if (typeof row.id !== 'number') return false;
+    return sent[String(row.id)] !== rowFingerprint(row);
+  });
+}
+
+/** Records rows as now matching the server. */
+export function updateSentMap(sent: SentMap, rows: Row[]): SentMap {
+  const next: SentMap = { ...sent };
+  for (const row of rows) {
+    if (typeof row.id === 'number') next[String(row.id)] = rowFingerprint(row);
+  }
+  return next;
+}
+
+/**
+ * Makes every row in a batch carry the same keys.
+ *
+ * PostgREST rejects a bulk upsert outright when the objects differ in shape —
+ * "all object keys must match" — and our rows legitimately differ: a sale may
+ * or may not have a note, an expense may or may not name a customer. Left
+ * alone, one optional field would fail a whole batch of sales, and the day's
+ * takings would sit unsynced behind a cryptic message.
+ *
+ * Missing keys become null rather than being dropped, so clearing a field on
+ * one device actually clears it on the other instead of silently keeping the
+ * old value.
+ */
+export function normalizeBatch(rows: Row[]): Row[] {
+  const keys = new Set<string>();
+  for (const row of rows) {
+    for (const [k, v] of Object.entries(row)) {
+      if (v !== undefined) keys.add(k);
+    }
+  }
+
+  return rows.map((row) => {
+    const out: Row = {};
+    for (const key of keys) {
+      const value = row[key];
+      out[key] = value === undefined ? null : value;
+    }
+    return out;
+  });
 }

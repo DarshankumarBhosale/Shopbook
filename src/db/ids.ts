@@ -49,6 +49,18 @@ export async function setDeviceNo(deviceNo: number, label: string): Promise<void
   cachedDeviceNo = deviceNo;
 }
 
+/**
+ * Whether this phone has actually been told which device it is.
+ *
+ * The default of 1 is only a fallback for a single-phone shop. If the helper's
+ * phone never chooses, both phones mint IDs from the same block and the first
+ * sale each rings up claims the same row — so the UI has to show this as unset
+ * rather than quietly looking configured.
+ */
+export async function isDeviceChosen(): Promise<boolean> {
+  return (await db.meta.get(DEVICE_KEY)) !== undefined;
+}
+
 export async function getDeviceLabel(): Promise<string> {
   const row = await db.meta.get(LABEL_KEY);
   return row?.value ?? 'owner';

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   rowsToPush, advanceHighWater, mergeDecision, planMerge, nextPullCursor,
   isAppendOnly, PUSH_ORDER, SYNC_TABLES,
+  rowFingerprint, changedRows, updateSentMap, normalizeBatch,
 } from '../syncPlan';
 
 const BLOCK = 1_000_000_000_000;
@@ -25,9 +26,22 @@ describe('what gets pushed', () => {
     expect(out.map((r) => r.id)).toEqual([1 * BLOCK + 5]);
   });
 
-  it('sends mutable tables whole, since they are small and get edited', () => {
+  it('sends every mutable row on the first sync, when nothing is on the server', () => {
     const items = [{ id: 1 }, { id: 2 }, { id: 38 }];
-    expect(rowsToPush('items', items, 1, BLOCK, 999999)).toHaveLength(3);
+    expect(rowsToPush('items', items, 1, BLOCK, 999999, {})).toHaveLength(3);
+  });
+
+  it('stops sending a mutable row once the server already matches it', () => {
+    const items = [{ id: 1, price: 1500 }, { id: 2, price: 1000 }];
+    const sent = updateSentMap({}, items);
+    expect(rowsToPush('items', items, 1, BLOCK, 0, sent)).toHaveLength(0);
+  });
+
+  it('sends a mutable row again after it is edited here', () => {
+    const before = [{ id: 1, price: 1500 }];
+    const sent = updateSentMap({}, before);
+    const after = [{ id: 1, price: 1800 }];
+    expect(rowsToPush('items', after, 1, BLOCK, 0, sent)).toEqual(after);
   });
 
   it('sends seeded append-only rows once, then stops', () => {
@@ -117,6 +131,94 @@ describe('the pull cursor', () => {
     const prev = '2026-08-31T09:00:00.000Z';
     expect(nextPullCursor([], prev)).toBe(prev);
     expect(nextPullCursor([{ updatedAt: '2026-08-01T00:00:00.000Z' }], prev)).toBe(prev);
+  });
+});
+
+describe('not clobbering the other phone edits', () => {
+  it('does not push back a row it only received', () => {
+    // The owner pulls the helper's expense. Nothing about it was edited here,
+    // so it must not be sent back — a push would stamp the owner's copy newer
+    // than whatever the helper has since done to it.
+    const fromHelper = { id: 2 * BLOCK + 7, amount: 1000, note: 'gas' };
+
+    const { toWrite } = planMerge('expenses', [{ ...fromHelper, updatedAt: '2026-08-30T10:00:00Z' }], new Map());
+    const sent = updateSentMap({}, toWrite);
+
+    expect(rowsToPush('expenses', toWrite, 1, BLOCK, 0, sent)).toHaveLength(0);
+  });
+
+  it('survives the full sequence that used to revert an expense edit', () => {
+    // 1. Helper writes the expense, owner pulls it.
+    const v1 = { id: 2 * BLOCK + 7, amount: 1000, note: 'gas' };
+    const ownerCopy = planMerge('expenses', [{ ...v1, updatedAt: '2026-08-30T10:00:00Z' }], new Map()).toWrite;
+    let ownerSent = updateSentMap({}, ownerCopy);
+
+    // 2. Helper corrects the amount. The owner has not seen v2 yet.
+    // 3. The owner syncs. Before the fingerprint check it pushed its whole
+    //    expenses table, sending stale v1 back over the helper's v2.
+    const ownerPush = rowsToPush('expenses', ownerCopy, 1, BLOCK, 0, ownerSent);
+    expect(ownerPush, 'stale copy was pushed back over a newer edit').toHaveLength(0);
+
+    // 4. The owner then pulls v2 and takes it, since the row is mutable and the
+    //    server timestamp is newer.
+    const v2 = { id: 2 * BLOCK + 7, amount: 2000, note: 'gas', updatedAt: '2026-08-30T11:00:00Z' };
+    const localById = new Map([[v2.id, { updatedAt: '2026-08-30T10:00:00Z' }]]);
+    const merged = planMerge('expenses', [v2], localById).toWrite;
+    expect(merged[0]).toMatchObject({ amount: 2000 });
+
+    // 5. And still does not echo it.
+    ownerSent = updateSentMap(ownerSent, merged);
+    expect(rowsToPush('expenses', merged, 1, BLOCK, 0, ownerSent)).toHaveLength(0);
+  });
+
+  it('does send the other phone row when this phone genuinely edits it', () => {
+    const fromHelper = [{ id: 2 * BLOCK + 7, amount: 1000, note: 'gas' }];
+    const sent = updateSentMap({}, fromHelper);
+    const ownerEdit = [{ id: 2 * BLOCK + 7, amount: 1000, note: 'cylinder' }];
+    expect(rowsToPush('expenses', ownerEdit, 1, BLOCK, 0, sent)).toEqual(ownerEdit);
+  });
+});
+
+describe('row fingerprints', () => {
+  it('ignores property order', () => {
+    expect(rowFingerprint({ id: 1, a: 'x', b: 2 })).toBe(rowFingerprint({ b: 2, id: 1, a: 'x' }));
+  });
+
+  it('ignores the server timestamp, which is not ours to compare', () => {
+    expect(rowFingerprint({ id: 1, a: 'x', updatedAt: '2020-01-01' }))
+      .toBe(rowFingerprint({ id: 1, a: 'x', updatedAt: '2030-01-01' }));
+  });
+
+  it('changes when a value changes, including zero versus missing', () => {
+    expect(rowFingerprint({ id: 1, amount: 100 })).not.toBe(rowFingerprint({ id: 1, amount: 101 }));
+    expect(rowFingerprint({ id: 1, amount: 0 })).not.toBe(rowFingerprint({ id: 1 }));
+  });
+
+  it('skips rows with no id rather than treating them as changed forever', () => {
+    expect(changedRows([{ name: 'orphan' }], {})).toHaveLength(0);
+  });
+});
+
+describe('batching for the server', () => {
+  it('gives every row the same keys, so an optional field cannot reject a batch', () => {
+    // PostgREST refuses a bulk upsert whose objects differ in shape. A single
+    // sale carrying a note would otherwise fail the whole day's push.
+    const out = normalizeBatch([
+      { id: 1, amount: 100, note: 'chai' },
+      { id: 2, amount: 200 },
+    ]);
+    expect(Object.keys(out[0]).sort()).toEqual(Object.keys(out[1]).sort());
+    expect(out[1].note).toBeNull();
+  });
+
+  it('turns undefined into null so clearing a field actually clears it', () => {
+    const out = normalizeBatch([{ id: 1, note: 'x' }, { id: 2, note: undefined }]);
+    expect(out[1].note).toBeNull();
+  });
+
+  it('leaves values alone otherwise', () => {
+    const rows = [{ id: 1, amount: 0, ok: false }];
+    expect(normalizeBatch(rows)).toEqual(rows);
   });
 });
 

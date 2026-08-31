@@ -9,15 +9,24 @@ import { PriceInput } from '../common/PriceInput';
 import { formatRupees } from '../../lib/format';
 import { parsePriceRupees, suggestOnlinePrice } from '../../lib/pricing';
 import { BackupView } from '../backup/BackupView';
+import { SyncView } from '../sync/SyncView';
 
-type Section = 'menu' | 'backup';
+type Section = 'menu' | 'backup' | 'sync';
+
+const ALL_SECTIONS: [Section, string][] = [
+  ['menu', 'Menu'],
+  ['backup', 'Backup'],
+  ['sync', 'Sync'],
+];
 
 const SectionSwitch: React.FC<{
   section: Section;
   onChange: (s: Section) => void;
-}> = ({ section, onChange }) => (
+  /** Limits the tabs shown — the helper has no business on the menu. */
+  only?: Section[];
+}> = ({ section, onChange, only }) => (
   <div className="flex gap-2 mb-3">
-    {([['menu', 'Menu & prices'], ['backup', 'Backup']] as [Section, string][]).map(
+    {ALL_SECTIONS.filter(([id]) => !only || only.includes(id)).map(
       ([id, label]) => (
         <button
           key={id}
@@ -60,22 +69,35 @@ export const MoreTab: React.FC = () => {
   const activeCount = sortedItems.filter((i) => i.isActive).length;
 
   const [section, setSection] = useState<Section>('menu');
+  const [helperSection, setHelperSection] = useState<Section>('backup');
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState({ name: '', category: 'Packaged', price: '', cost: '' });
   const [isSaving, setIsSaving] = useState(false);
 
-  // A helper can still reach Backup — they may be the one holding the till.
+  // A helper reaches Backup and Sync but not the menu — they may be the one
+  // holding the till, and their own phone still has to connect itself.
   if (role !== 'owner') {
-    return <BackupView />;
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="px-4 pt-3">
+          <SectionSwitch
+            section={helperSection}
+            onChange={setHelperSection}
+            only={['backup', 'sync']}
+          />
+        </div>
+        {helperSection === 'sync' ? <SyncView /> : <BackupView />}
+      </div>
+    );
   }
 
-  if (section === 'backup') {
+  if (section === 'backup' || section === 'sync') {
     return (
       <div className="flex-1 flex flex-col min-h-0">
         <div className="px-4 pt-3">
           <SectionSwitch section={section} onChange={setSection} />
         </div>
-        <BackupView />
+        {section === 'sync' ? <SyncView /> : <BackupView />}
       </div>
     );
   }
